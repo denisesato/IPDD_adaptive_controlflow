@@ -97,12 +97,9 @@ def dataset1():
     # for testing
     lognames = ['cb2.5k.xes']
     stable_periods = [100]
-    deltas = [0.002]
+    deltas = [0.1]
 
     output_folder = f'data/output/controlflow_adaptive/detection_2metrics_updating_model'
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
     drifts = {}
     for log in lognames:
         for sp in stable_periods:

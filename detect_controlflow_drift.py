@@ -20,26 +20,26 @@ class MetricDimension(str, Enum):
 def save_plot(metrics, values, output_folder, output_name, drifts):
     plt.style.use('seaborn-whitegrid')
     plt.clf()
-    plt.plot(values[metrics[MetricDimension.FITNESS.name]], label=metrics[MetricDimension.FITNESS.value])
-    plt.plot(values[metrics[MetricDimension.PRECISION.name]], label=metrics[MetricDimension.PRECISION.value])
-    no_values = len(values[metrics[MetricDimension.FITNESS.name]])
+    plt.plot(values[MetricDimension.FITNESS.name], label=metrics[MetricDimension.FITNESS.name])
+    plt.plot(values[MetricDimension.PRECISION.name], label=metrics[MetricDimension.PRECISION.name])
+    no_values = len(values[MetricDimension.FITNESS.name])
     gap = int(no_values * 0.1)
     if gap == 0:  # less than 10 values
         gap = 1
     xpos = range(0, no_values + 1, gap)
 
     # draw a line for each reported drift by the fitness dimension
-    indexes = [int(x) for x in drifts[metrics[0]]]
+    indexes = [int(x) for x in drifts[MetricDimension.FITNESS.name]]
     for d in indexes:
         plt.axvline(x=d, label=d, color='k', linestyle=':')
 
     # draw a line for each reported drift by the precision dimension
-    indexes = [int(x) for x in drifts[metrics[1]]]
+    indexes = [int(x) for x in drifts[MetricDimension.PRECISION.name]]
     for d in indexes:
         plt.axvline(x=d, label=d, color='green', linestyle=':')
 
     plt.legend()
-    if len(drifts[metrics[MetricDimension.FITNESS.name]]) > 0 or len(drifts[metrics[MetricDimension.PRECISION.name]]) > 0:
+    if len(drifts[MetricDimension.FITNESS.name]) > 0 or len(drifts[MetricDimension.PRECISION.name]) > 0:
         plt.xlabel('Trace')
     else:
         plt.xlabel('Trace - no drifts detected')
@@ -76,6 +76,10 @@ def calculate_metric(metric_name, log, net, im, fm):
 # the stable_period define the number of traces to discover the process models
 # the inductive miner is applied
 def apply_adwin_updating_model(folder, logname, delta_detection, stable_period, output_folder):
+    output_folder = f'{output_folder}_d{delta_detection}_sp{stable_period}'
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
     # import the event log sorted by timestamp
     variant = xes_importer.Variants.ITERPARSE
     parameters = {variant.value.Parameters.TIMESTAMP_SORT: True}
@@ -110,40 +114,29 @@ def apply_adwin_updating_model(folder, logname, delta_detection, stable_period, 
         print(f'Reading trace [{i}]...')
         last_trace = EventLog(eventlog[i:(i + 1)])
 
-        # calculate the fitness metric
-        fitness_metric_name = metrics[MetricDimension.FITNESS.name]
-        fitness = calculate_metric(fitness_metric_name, last_trace, net, im, fm) * 100
-        values[fitness_metric_name].append(fitness)
-
-        # calculate the precision metric
-        precision_metric_name = metrics[MetricDimension.PRECISION.name]
-        precision = calculate_metric(precision_metric_name, last_trace, net, im, fm) * 100
-        values[precision_metric_name].append(precision)
-
-        # update the new values in the two drift detectors
-        adwin_detection[fitness_metric_name].add_element(fitness)
-        adwin_detection[precision_metric_name].add_element(precision)
-
         # check if one of the metrics report a drift
         drift_detected = False
-        if adwin_detection[fitness_metric_name].detected_change():
-            # drift detected, save it
-            drifts[fitness_metric_name].append(i)
-            print(f'Metric [{fitness_metric_name}] - Drift detected at trace {i + 1}')
-            drift_detected = True
+        for dimension in MetricDimension:
+            # calculate the metric for each dimension
+            metric_name = metrics[dimension.name]
+            new_value = calculate_metric(metric_name, last_trace, net, im, fm) * 100
+            values[dimension.name].append(new_value)
 
-        if adwin_detection[precision_metric_name].detected_change():
-            # drift detected, save it
-            drifts[precision_metric_name].append(i)
-            print(f'Metric [{precision_metric_name}] - Drift detected at trace {i + 1}')
-            drift_detected = True
+            # update the new value in the detector
+            adwin_detection[dimension.name].add_element(new_value)
+
+            if adwin_detection[dimension.name].detected_change():
+                # drift detected, save it
+                drifts[dimension.name].append(i)
+                print(f'Metric [{dimension.value}] for dimension [{dimension.name}] - Drift detected at trace {i}')
+                drift_detected = True
 
         # if at least one metric report a drift a new model is discovered
         if drift_detected:
-            # reset both detectors, to avoid a new drift during the stable period
-            adwin_detection[fitness_metric_name].reset()
-            adwin_detection[precision_metric_name].reset()
-            # using next traces to discover a new model using the next traces (stable_period)
+            for dimension in MetricDimension:
+                # reset the detectors to avoid a new drift during the stable period
+                adwin_detection[dimension.name].reset()
+            # discover a new model using the next traces (stable_period)
             final_trace_id = i + stable_period
             if final_trace_id > total_of_traces:
                 final_trace_id = total_of_traces - 1
@@ -157,7 +150,10 @@ def apply_adwin_updating_model(folder, logname, delta_detection, stable_period, 
             model_no += 1
 
     save_plot(metrics, values, output_folder, f'{logname}_d{delta_detection}_sp{stable_period}', drifts)
-    all_drifts = list(set(drifts[metrics[MetricDimension.FITNESS.name]] + drifts[metrics[MetricDimension.PRECISION.name]]))
+    all_drifts = ()
+    for dimension in MetricDimension:
+        all_drifts += set(drifts[dimension.name])
+    all_drifts = list(all_drifts)
     all_drifts.sort()
     combined_drifts = {f'd={delta_detection} sp={stable_period}': all_drifts}
     return combined_drifts
