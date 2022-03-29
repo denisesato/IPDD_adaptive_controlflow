@@ -1,5 +1,10 @@
-def base1():
-    folder_base1 = 'data/input/logs/Controlflow/BASE1'
+import os
+import pandas as pd
+from detect_controlflow_drift import apply_adwin_updating_model
+
+
+def dataset1():
+    input_folder = 'data/input/logs/controlflow/dataset1'
 
     lognames2500 = [
         'cb2.5k.xes',
@@ -85,6 +90,28 @@ def base1():
         'sw10k.xes',
     ]
 
+    lognames = lognames2500 + lognames5000 + lognames7500 + lognames10000
+    stable_periods = [i for i in range(100, 1000, 50)]
+    deltas = [0.002, 0.02, 0.1, 0.2, 0.3, 0.5]
+
+    # for testing
+    lognames = ['cb2.5k.xes']
+    stable_periods = [100]
+    deltas = [0.002]
+
+    output_folder = f'data/output/controlflow_adaptive/detection_2metrics_updating_model'
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    drifts = {}
+    for log in lognames:
+        for sp in stable_periods:
+            for d in deltas:
+                drifts[log] = apply_adwin_updating_model(input_folder, log, d, sp, output_folder)
+
+    df1 = pd.DataFrame.from_dict(drifts, orient='index')
+    df1.to_excel(os.path.join(output_folder, 'experiments_dataset1.xlsx'))
+
 
 if __name__ == '__main__':
-    base1()
+    dataset1()
