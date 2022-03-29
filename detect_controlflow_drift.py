@@ -20,34 +20,30 @@ class MetricDimension(str, Enum):
 def save_plot(metrics, values, output_folder, output_name, drifts):
     plt.style.use('seaborn-whitegrid')
     plt.clf()
-    plt.plot(values[MetricDimension.FITNESS.name], label=metrics[MetricDimension.FITNESS.name])
-    plt.plot(values[MetricDimension.PRECISION.name], label=metrics[MetricDimension.PRECISION.name])
-    no_values = len(values[MetricDimension.FITNESS.name])
+    for dimension in MetricDimension:
+        plt.plot(values[dimension.name], label=metrics[dimension.name])
+        no_values = len(values[dimension.name])
     gap = int(no_values * 0.1)
     if gap == 0:  # less than 10 values
         gap = 1
     xpos = range(0, no_values + 1, gap)
 
     # draw a line for each reported drift by the fitness dimension
-    indexes = [int(x) for x in drifts[MetricDimension.FITNESS.name]]
+    indexes = [int(x) for x in drifts]
     for d in indexes:
         plt.axvline(x=d, label=d, color='k', linestyle=':')
 
-    # draw a line for each reported drift by the precision dimension
-    indexes = [int(x) for x in drifts[MetricDimension.PRECISION.name]]
-    for d in indexes:
-        plt.axvline(x=d, label=d, color='green', linestyle=':')
-
-    plt.legend()
-    if len(drifts[MetricDimension.FITNESS.name]) > 0 or len(drifts[MetricDimension.PRECISION.name]) > 0:
+    if len(drifts) > 0:
         plt.xlabel('Trace')
     else:
         plt.xlabel('Trace - no drifts detected')
+
     plt.xticks(xpos, xpos, rotation=90)
+    plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left')
     plt.ylabel(f'Metric value')
     plt.title(f'{output_name}')
     output_name = os.path.join(output_folder, f'{output_name}.png')
-    plt.savefig(output_name)
+    plt.savefig(output_name, bbox_inches='tight')
 
 
 def calculate_metric(metric_name, log, net, im, fm):
@@ -149,11 +145,10 @@ def apply_adwin_updating_model(folder, logname, delta_detection, stable_period, 
                                os.path.join(output_folder, f'{logname}_PN_{model_no}_{i}_{final_trace_id}.png'))
             model_no += 1
 
-    save_plot(metrics, values, output_folder, f'{logname}_d{delta_detection}_sp{stable_period}', drifts)
-    all_drifts = ()
+    all_drifts = []
     for dimension in MetricDimension:
-        all_drifts += set(drifts[dimension.name])
-    all_drifts = list(all_drifts)
+        all_drifts += drifts[dimension.name]
+    all_drifts = list(set(all_drifts))
     all_drifts.sort()
-    combined_drifts = {f'd={delta_detection} sp={stable_period}': all_drifts}
-    return combined_drifts
+    save_plot(metrics, values, output_folder, f'{logname}_d{delta_detection}_sp{stable_period}', all_drifts)
+    return all_drifts

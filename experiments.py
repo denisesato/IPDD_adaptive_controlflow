@@ -96,15 +96,18 @@ def dataset1():
 
     # for testing
     lognames = ['cb2.5k.xes']
-    stable_periods = [100]
-    deltas = [0.1]
+    stable_periods = [100, 150]
+    deltas = [0.1, 0.2]
 
     output_folder = f'data/output/controlflow_adaptive/detection_2metrics_updating_model'
-    drifts = {}
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    drifts = dict.fromkeys(lognames)
     for log in lognames:
+        drifts[log] = {}
         for sp in stable_periods:
             for d in deltas:
-                drifts[log] = apply_adwin_updating_model(input_folder, log, d, sp, output_folder)
+                drifts[log][f'd={d} sp={sp}'] = apply_adwin_updating_model(input_folder, log, d, sp, output_folder)
 
     df1 = pd.DataFrame.from_dict(drifts, orient='index')
     df1.to_excel(os.path.join(output_folder, 'experiments_dataset1.xlsx'))
