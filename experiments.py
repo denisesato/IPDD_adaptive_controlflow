@@ -95,9 +95,9 @@ def dataset1():
     deltas = [0.002, 0.02, 0.1, 0.2, 0.3, 0.5]
 
     # for testing
-    lognames = ['cb2.5k.xes']
-    stable_periods = [100, 150]
-    deltas = [0.1, 0.2]
+    # lognames = ['cb2.5k.xes']
+    # stable_periods = [100]
+    # deltas = [0.1]
 
     output_folder = f'data/output/controlflow_adaptive/detection_2metrics_updating_model'
     if not os.path.exists(output_folder):
