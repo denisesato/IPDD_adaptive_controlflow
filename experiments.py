@@ -1,6 +1,7 @@
 import os
 import pandas as pd
-from detect_controlflow_drift import apply_adwin_updating_model, apply_adwin_updating_model_after_each_trace
+from detect_controlflow_drift import apply_adwin_updating_model, apply_adwin_updating_model_after_each_trace, \
+    MetricDimension
 
 
 def dataset1():
@@ -94,8 +95,16 @@ def dataset1():
     stable_periods = [i for i in range(100, 1000, 50)]
     deltas = [0.002, 0.02, 0.1, 0.2, 0.3, 0.5]
 
+    # different metrics can be used for each dimension evaluated
+    # by now we expected on metric for fitness quality dimension and other for precision quality dimension
+    metrics = {
+        MetricDimension.FITNESS.name: 'fitnessTBR',
+        MetricDimension.PRECISION.name: 'precisionETC',
+        # MetricDimension.GENERALIZATION: 'generalization'
+    }
+
     # for testing
-    lognames = ['cb10k.xes']
+    lognames = ['cd5k.xes']
     stable_periods = [100]
     deltas = [0.002]
 
@@ -107,7 +116,7 @@ def dataset1():
         drifts[log] = {}
         for sp in stable_periods:
             for d in deltas:
-                drifts[log][f'd={d} sp={sp}'] = apply_adwin_updating_model(input_folder, log, d, sp, output_folder)
+                drifts[log][f'd={d} sp={sp}'] = apply_adwin_updating_model(input_folder, log, metrics, d, sp, output_folder)
 
     df1 = pd.DataFrame.from_dict(drifts, orient='index')
     df1.to_excel(os.path.join(output_folder, 'experiments_dataset1.xlsx'))

@@ -79,7 +79,7 @@ def calculate_metric(metric_name, log, net, im, fm):
 # when a drift is detected a new model is discovered using the next traces
 # the stable_period define the number of traces to discover the process models
 # the inductive miner is applied
-def apply_adwin_updating_model(folder, logname, delta_detection, stable_period, output_folder):
+def apply_adwin_updating_model(folder, logname, metrics, delta_detection, stable_period, output_folder):
     output_folder = f'{output_folder}_d{delta_detection}_sp{stable_period}'
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -98,12 +98,6 @@ def apply_adwin_updating_model(folder, logname, delta_detection, stable_period, 
     pn_visualizer.save(gviz_pn,
                        os.path.join(output_folder, f'{logname}_PN_INITIAL_0_{stable_period - 1}.png'))
 
-    # different metrics can be used for each dimension evaluated
-    # by now we expected on metric for fitness quality dimension and other for precision quality dimension
-    metrics = {
-        MetricDimension.FITNESS.name: 'fitnessTBR',
-        MetricDimension.PRECISION.name: 'precisionETC',
-    }
     adwin_detection = {}
     drifts = {}
     values = {}
@@ -120,7 +114,7 @@ def apply_adwin_updating_model(folder, logname, delta_detection, stable_period, 
     for i in range(0, total_of_traces):
         print(f'Reading trace [{i}]...')
         last_trace = EventLog(eventlog[i:(i+1)])
-        if i >= stable_period:
+        if i >= final_trace_id:
             all_traces = EventLog(eventlog[initial_trace_id:(i+1)])
         else:
             all_traces = EventLog(eventlog[initial_trace_id:final_trace_id])
@@ -128,7 +122,15 @@ def apply_adwin_updating_model(folder, logname, delta_detection, stable_period, 
         drift_detected = False
         for dimension in metrics.keys():
             # calculate the metric for each dimension
-            new_value = calculate_metric(metrics[dimension], last_trace, net, im, fm) * 100
+            # for each dimension decide if the metric should be calculated using only the last trace read or all
+            # the traces read since the last drift
+            new_value = 0
+            if dimension == MetricDimension.FITNESS.name:
+                new_value = calculate_metric(metrics[dimension], last_trace, net, im, fm) * 100
+            if dimension == MetricDimension.PRECISION.name:
+                new_value = calculate_metric(metrics[dimension], all_traces, net, im, fm) * 100
+            if dimension == MetricDimension.GENERALIZATION.name:
+                new_value = calculate_metric(metrics[dimension], all_traces, net, im, fm) * 100
             values[dimension].append(new_value)
             # update the new value in the detector
             adwin_detection[dimension].add_element(new_value)
