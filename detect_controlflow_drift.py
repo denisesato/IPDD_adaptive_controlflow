@@ -15,6 +15,8 @@ from pm4py.algo.discovery.dfg import algorithm as dfg_discovery
 from pm4py.visualization.dfg import visualizer as dfg_visualization
 from enum import Enum
 
+from compare_dfg import calculate_nodes_similarity, calculate_edges_similarity
+
 
 class QualityDimension(str, Enum):
     FITNESS = 'fitness'
@@ -177,17 +179,14 @@ def apply_adwin_updating_model(folder, logname, metrics, delta_detection, stable
 # calculate the similarity between the initial model and the current one
 # the current model is discovered using all the traces read since the last drift
 def calculate_similarity_metric(m, gviz_for_comparing, new_gviz):
+    value = 0
     if m == SimilarityMetric.NODES:
-
-            labels_g1 = DfgMetricUtil.get_labels(self.model1)
-            labels_g2 = DfgMetricUtil.get_labels(self.model2)
-
-            self.diff_removed = set(labels_g1).difference(set(labels_g2))
-            self.diff_added = set(labels_g2).difference(set(labels_g1))
-
-            inter = set(labels_g1).intersection(set(labels_g2))
-            self.value = 2 * len(inter) / (len(labels_g1) + len(labels_g2))
-            return self.value, self.diff_added, self.diff_removed
+        value, added, removed = calculate_nodes_similarity(gviz_for_comparing, new_gviz)
+    elif m == SimilarityMetric.EDGES:
+        value, added, removed = calculate_edges_similarity(gviz_for_comparing, new_gviz)
+    else:
+        print(f'Similarity metric {m} is not implemented!')
+    return value
 
 
 # apply the ADWIN detector (scikit-multiflow) in the two similarity metrics: nodes and edges similarity
@@ -244,7 +243,6 @@ def apply_adwin_on_model_similarity(folder, logname, metrics, delta_detection, s
         drift_detected = False
         for m in metrics.keys():
             # calculate all the defined metrics
-            new_value = 0
             new_value = calculate_similarity_metric(m, gviz_for_comparing, current_gviz)
             values[m].append(new_value)
             # update the new value in the detector
