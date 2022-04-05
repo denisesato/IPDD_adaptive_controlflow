@@ -3,7 +3,6 @@ import os
 import pandas as pd
 import skmultiflow
 import matplotlib.pyplot as plt
-from pm4py.algo.discovery.inductive.algorithm import Variants
 from pm4py.objects.log.importer.xes import importer as xes_importer
 from pm4py.algo.discovery.inductive import algorithm as inductive_miner
 from pm4py.visualization.petri_net import visualizer as pn_visualizer
@@ -12,14 +11,19 @@ from pm4py.objects.log.obj import EventLog
 from pm4py.objects.log.util import interval_lifecycle
 from pm4py.algo.evaluation.precision import algorithm as precision_evaluator
 from pm4py.algo.evaluation.replay_fitness import algorithm as replay_fitness_evaluator
+from pm4py.algo.discovery.dfg import algorithm as dfg_discovery
+from pm4py.visualization.dfg import visualizer as dfg_visualization
 from enum import Enum
 
 
-class MetricDimension(str, Enum):
+class QualityDimension(str, Enum):
     FITNESS = 'fitness'
     PRECISION = 'precision'
     GENERALIZATION = 'generalization'
 
+class SimilarityMetric(str, Enum):
+    NODES = 'nodes similarity'
+    EDGES = 'edges similarity'
 
 # plot the values calculated for both quality dimensions and indicate the detected drifts
 def save_plot(metrics, values, output_folder, output_name, drifts):
@@ -125,11 +129,11 @@ def apply_adwin_updating_model(folder, logname, metrics, delta_detection, stable
             # for each dimension decide if the metric should be calculated using only the last trace read or all
             # the traces read since the last drift
             new_value = 0
-            if dimension == MetricDimension.FITNESS.name:
+            if dimension == QualityDimension.FITNESS.name:
                 new_value = calculate_metric(metrics[dimension], last_trace, net, im, fm) * 100
-            if dimension == MetricDimension.PRECISION.name:
+            if dimension == QualityDimension.PRECISION.name:
                 new_value = calculate_metric(metrics[dimension], all_traces, net, im, fm) * 100
-            if dimension == MetricDimension.GENERALIZATION.name:
+            if dimension == QualityDimension.GENERALIZATION.name:
                 new_value = calculate_metric(metrics[dimension], all_traces, net, im, fm) * 100
             values[dimension].append(new_value)
             # update the new value in the detector
@@ -170,6 +174,108 @@ def apply_adwin_updating_model(folder, logname, metrics, delta_detection, stable
     return all_drifts
 
 
+# calculate the similarity between the initial model and the current one
+# the current model is discovered using all the traces read since the last drift
+def calculate_similarity_metric(m, gviz_for_comparing, new_gviz):
+    if m == SimilarityMetric.NODES:
+
+            labels_g1 = DfgMetricUtil.get_labels(self.model1)
+            labels_g2 = DfgMetricUtil.get_labels(self.model2)
+
+            self.diff_removed = set(labels_g1).difference(set(labels_g2))
+            self.diff_added = set(labels_g2).difference(set(labels_g1))
+
+            inter = set(labels_g1).intersection(set(labels_g2))
+            self.value = 2 * len(inter) / (len(labels_g1) + len(labels_g2))
+            return self.value, self.diff_added, self.diff_removed
+
+
+# apply the ADWIN detector (scikit-multiflow) in the two similarity metrics: nodes and edges similarity
+# the stable_period define the number of traces to discover the initial process models
+# after read a new trace a new model is discovered and compared to the initial model using the similarity metrics
+# these metrics are inputted in the detector
+def apply_adwin_on_model_similarity(folder, logname, metrics, delta_detection, stable_period, output_folder):
+    output_folder = f'{output_folder}_d{delta_detection}_sp{stable_period}'
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    # import the event log sorted by timestamp
+    variant = xes_importer.Variants.ITERPARSE
+    parameters = {variant.value.Parameters.TIMESTAMP_SORT: True}
+    original_eventlog = xes_importer.apply(os.path.join(folder, logname), variant=variant, parameters=parameters)
+    # convert to interval log, if no interval log is provided as input this line has no effect
+    eventlog = interval_lifecycle.to_interval(original_eventlog)
+    # derive the initial model using the parameter stable_period
+    print(f'Initial model discovered using traces from 0 to {stable_period - 1}')
+    log_for_model = EventLog(eventlog[0:stable_period])
+    # mine the DFG (using Pm4Py)
+    dfg, start_activities, end_activities = dfg_discovery.apply(log_for_model)
+    parameters = {dfg_visualization.Variants.FREQUENCY.value.Parameters.START_ACTIVITIES: start_activities,
+                  dfg_visualization.Variants.FREQUENCY.value.Parameters.END_ACTIVITIES: end_activities}
+    gviz_for_comparing = dfg_visualization.apply(dfg, log=log_for_model, parameters=parameters)
+
+    adwin_detection = {}
+    drifts = {}
+    values = {}
+
+    for m in metrics.keys():
+        # instantiate one detector for each evaluated dimension (fitness and precision)
+        adwin_detection[m] = skmultiflow.drift_detection.ADWIN(delta=delta_detection)
+        drifts[m] = []
+        values[m] = []
+
+    total_of_traces = len(eventlog)
+    initial_trace_id = 0
+    final_trace_id = initial_trace_id + stable_period
+    for i in range(0, total_of_traces):
+        print(f'Reading trace [{i}]...')
+        if i >= final_trace_id:
+            all_traces = EventLog(eventlog[initial_trace_id:(i+1)])
+        else:
+            all_traces = EventLog(eventlog[initial_trace_id:final_trace_id])
+
+        # discover the current model
+        dfg, start_activities, end_activities = dfg_discovery.apply(all_traces)
+        parameters = {dfg_visualization.Variants.FREQUENCY.value.Parameters.START_ACTIVITIES: start_activities,
+                      dfg_visualization.Variants.FREQUENCY.value.Parameters.END_ACTIVITIES: end_activities}
+        current_gviz = dfg_visualization.apply(dfg, log=all_traces, parameters=parameters)
+
+        # check if one of the metrics report a drift
+        drift_detected = False
+        for m in metrics.keys():
+            # calculate all the defined metrics
+            new_value = 0
+            new_value = calculate_similarity_metric(m, gviz_for_comparing, current_gviz)
+            values[m].append(new_value)
+            # update the new value in the detector
+            adwin_detection[m].add_element(new_value)
+            if adwin_detection[m].detected_change():
+                # drift detected, save it
+                drifts[m].append(i)
+                print(f'Metric [{m}] - Drift detected at trace {i}')
+                drift_detected = True
+
+        # if at least one metric report a drift a new model is discovered
+        if drift_detected:
+            for m in metrics.keys():
+                # reset the detectors to avoid a new drift during the stable period
+                adwin_detection[m].reset()
+            initial_trace_id = i
+            # discover a new model using the next traces (stable_period)
+            final_trace_id = i + stable_period
+            if final_trace_id > total_of_traces:
+                final_trace_id = total_of_traces
+
+    all_drifts = []
+    for dimension in metrics.keys():
+        all_drifts += drifts[dimension]
+        df = pd.DataFrame(values[dimension])
+        df.to_excel(os.path.join(output_folder, f'{dimension}.xlsx'))
+    all_drifts = list(set(all_drifts))
+    all_drifts.sort()
+    save_plot(metrics, values, output_folder, f'{logname}_d{delta_detection}_sp{stable_period}', all_drifts)
+    return all_drifts
+
 # apply the ADWIN detector (scikit-multiflow) in two metrics: fitness and precision
 # fitness is calculated using the last trace read
 # precision is calculated using all the traces read since the last detected drift
@@ -192,8 +298,8 @@ def apply_adwin_updating_model_after_each_trace(folder, logname, delta_detection
     # by now we expected on metric for fitness quality dimension and other for precision quality dimension
     metrics = {
         # MetricDimension.FITNESS.name: 'fitnessTBR',
-        MetricDimension.PRECISION.name: 'precisionETC',
-        MetricDimension.GENERALIZATION.name: 'generalization'
+        QualityDimension.PRECISION.name: 'precisionETC',
+        QualityDimension.GENERALIZATION.name: 'generalization'
     }
     adwin_detection = {}
     drifts = {}
