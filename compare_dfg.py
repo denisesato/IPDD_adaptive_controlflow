@@ -39,51 +39,69 @@ def get_labels(g):
     return labels_g
 
 
-def calculate_nodes_similarity(model1, model2):
-    # convert the graphviz model to Agraph (from networkx)
-    agraph_model1 = get_nxgraph_from_gviz(model1)
-    agraph_model2 = get_nxgraph_from_gviz(model2)
+# def calculate_nodes_similarity(model1, model2):
+#     # convert the graphviz model to Agraph (from networkx)
+#     agraph_model1 = get_nxgraph_from_gviz(model1)
+#     agraph_model2 = get_nxgraph_from_gviz(model2)
+#
+#     labels_g1 = get_labels(agraph_model1)
+#     labels_g2 = get_labels(agraph_model2)
+#
+#     diff_removed = set(labels_g1).difference(set(labels_g2))
+#     diff_added = set(labels_g2).difference(set(labels_g1))
+#
+#     inter = set(labels_g1).intersection(set(labels_g2))
+#     value = 2 * len(inter) / (len(labels_g1) + len(labels_g2))
+#     return value, diff_added, diff_removed
+#
+#
+# def calculate_edges_similarity(model1, model2):
+#     # calulate the nodes similarity first
+#     nodes_similarity_value, added_nodes, removed_nodes = calculate_nodes_similarity(model1, model2)
+#
+#     # convert the graphviz model to Agraph (from networkx)
+#     agraph_model1 = get_nxgraph_from_gviz(model1)
+#     agraph_model2 = get_nxgraph_from_gviz(model2)
+#
+#     # remove frequencies from the labels
+#     new_g1 = remove_frequencies_from_labels(agraph_model1)
+#     new_g2 = remove_frequencies_from_labels(agraph_model2)
+#
+#     # if the nodes similarity is different than 1
+#     # IPDD removes the different nodes
+#     # then it calculated the edges similarity metric
+#     if nodes_similarity_value < 1:
+#         new_g1, new_g2 = remove_different_nodes(new_g1, new_g2, set.union(added_nodes, removed_nodes))
+#
+#     # get the different edges
+#     diff_removed = nx.difference(new_g1, new_g2)
+#     for e in diff_removed.edges:
+#         diff_removed.add(e)
+#
+#     diff_added = nx.difference(new_g2, new_g1)
+#     for e in diff_added.edges:
+#         diff_added.add(e)
+#
+#     # calculate the edges similarity metric
+#     inter = set(new_g1.edges).intersection(set(new_g2.edges))
+#     value = 2 * len(inter) / (len(new_g1.edges) + len(new_g2.edges))
+#     return value, diff_added, diff_removed
 
-    labels_g1 = get_labels(agraph_model1)
-    labels_g2 = get_labels(agraph_model2)
+# calculate nodes and edges similarity using the list of nodes and the list of edges instead of
+# a graphviz object
+def calculate_nodes_similarity(nodes1, nodes2):
+    diff_removed = set(nodes1).difference(set(nodes2))
+    diff_added = set(nodes2).difference(set(nodes1))
 
-    diff_removed = set(labels_g1).difference(set(labels_g2))
-    diff_added = set(labels_g2).difference(set(labels_g1))
-
-    inter = set(labels_g1).intersection(set(labels_g2))
-    value = 2 * len(inter) / (len(labels_g1) + len(labels_g2))
+    inter = set(nodes1).intersection(set(nodes2))
+    value = 2 * len(inter) / (len(nodes1) + len(nodes2))
     return value, diff_added, diff_removed
 
 
-def calculate_edges_similarity(model1, model2):
-    # calulate the nodes similarity first
-    nodes_metric = calculate_nodes_similarity(model1, model2)
-    nodes_similarity_value, added_nodes, removed_nodes = nodes_metric.calculate()
+def calculate_edges_similarity(edges1, edges2):
+    diff_removed = set(edges1).difference(set(edges2))
+    diff_added = set(edges2).difference(set(edges1))
 
-    # convert the graphviz model to Agraph (from networkx)
-    agraph_model1 = get_nxgraph_from_gviz(model1)
-    agraph_model2 = get_nxgraph_from_gviz(model2)
-
-    # remove frequencies from the labels
-    new_g1 = remove_frequencies_from_labels(agraph_model1)
-    new_g2 = remove_frequencies_from_labels(agraph_model2)
-
-    # if the nodes similarity is different than 1
-    # IPDD removes the different nodes
-    # then it calculated the edges similarity metric
-    if nodes_similarity_value < 1:
-        new_g1, new_g2 = remove_different_nodes(new_g1, new_g2, set.union(added_nodes, removed_nodes))
-
-    # get the different edges
-    diff_removed = nx.difference(new_g1, new_g2)
-    for e in diff_removed.edges:
-        diff_removed.add(e)
-
-    diff_added = nx.difference(new_g2, new_g1)
-    for e in diff_added.edges:
-        diff_added.add(e)
-
-    # calculate the edges similarity metric
-    inter = set(new_g1.edges).intersection(set(new_g2.edges))
-    value = 2 * len(inter) / (len(new_g1.edges) + len(new_g2.edges))
+    inter = set(edges1).intersection(set(edges2))
+    value = 2 * len(inter) / (len(edges1) + len(edges2))
     return value, diff_added, diff_removed

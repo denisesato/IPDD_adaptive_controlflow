@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from detect_controlflow_drift import apply_adwin_updating_model, apply_adwin_updating_model_after_each_trace, \
-    QualityDimension, apply_adwin_on_model_similarity
+    QualityDimension, apply_adwin_on_model_similarity, SimilarityMetric
 
 
 def dataset1_similarity_strategie():
@@ -96,9 +96,13 @@ def dataset1_similarity_strategie():
     deltas = [0.002, 0.02, 0.1, 0.2, 0.3, 0.5]
 
     # for testing
-    lognames = ['cd5k.xes']
+    lognames = lognames5000
     stable_periods = [100]
     deltas = [0.002]
+    metrics = [
+        SimilarityMetric.NODES,
+        SimilarityMetric.EDGES
+    ]
 
     output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity'
     if not os.path.exists(output_folder):
@@ -108,7 +112,7 @@ def dataset1_similarity_strategie():
         drifts[log] = {}
         for sp in stable_periods:
             for d in deltas:
-                drifts[log][f'd={d} sp={sp}'] = apply_adwin_on_model_similarity(input_folder, log, d, sp, output_folder)
+                drifts[log][f'd={d} sp={sp}'] = apply_adwin_on_model_similarity(input_folder, log, metrics, d, sp, output_folder)
 
     df1 = pd.DataFrame.from_dict(drifts, orient='index')
     df1.to_excel(os.path.join(output_folder, 'experiments_model_similarity_dataset1.xlsx'))
