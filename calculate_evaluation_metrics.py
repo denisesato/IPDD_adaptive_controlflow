@@ -159,7 +159,7 @@ if __name__ == '__main__':
         # 'FPR'
     ]
 
-    file_path = 'data//output'
-    filename = 'experiments_dataset1.xlsx'
+    file_path = 'data//output//controlflow_adaptive//detection_on_model_similarity'
+    filename = 'experiments_model_similarity_dataset1.xlsx'
     calculate_metrics_dataset1(file_path, filename, metrics, scenarios, actual_change_points, number_of_instances,
-                               error_tolerance, save_input_for_calculation=False)
+                               error_tolerance, save_input_for_calculation=True)

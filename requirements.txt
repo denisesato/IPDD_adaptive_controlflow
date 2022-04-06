@@ -33,7 +33,9 @@ pm4py==2.2.19.2
 prompt-toolkit==3.0.28
 pure-eval==0.2.2
 pydotplus==2.0.2
+pyemd==0.5.1
 Pygments==2.11.2
+pygraphviz @ file:///C:/Users/denisesato/PycharmProjects/IPDD_adaptive_controlflow/pygraphviz-1.9-cp39-cp39-win_amd64.whl
 pyparsing==3.0.7
 python-dateutil==2.8.2
 pytz==2022.1
