@@ -113,7 +113,8 @@ def calculate_metric(metric_name, log, net, im, fm):
 # when a drift is detected a new model is discovered using the next traces
 # the stable_period define the number of traces to discover the process models
 # the inductive miner is applied
-def apply_adwin_updating_model(folder, logname, metrics, delta_detection, stable_period, output_folder):
+def apply_adwin_on_quality_metrics(folder, logname, metrics, delta_detection, stable_period, output_folder,
+                                   update_model=True):
     output_folder = f'{output_folder}_d{delta_detection}_sp{stable_period}'
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -165,10 +166,10 @@ def apply_adwin_updating_model(folder, logname, metrics, delta_detection, stable
             if dimension == QualityDimension.FITNESS.name:
                 new_value = calculate_metric(metrics[dimension], last_trace, net, im, fm) * 100
             if dimension == QualityDimension.PRECISION.name:
-                # new_value = calculate_metric(metrics[dimension], all_traces, net, im, fm) * 100
+                # new_value = calculate_metric(metrics[dimension], all_traces, net, im, fm)
                 new_value = calculate_metric(metrics[dimension], last_trace, net, im, fm) * 100
             if dimension == QualityDimension.GENERALIZATION.name:
-                # new_value = calculate_metric(metrics[dimension], all_traces, net, im, fm) * 100
+                # new_value = calculate_metric(metrics[dimension], all_traces, net, im, fm)
                 new_value = calculate_metric(metrics[dimension], last_trace, net, im, fm) * 100
             values[dimension].append(new_value)
             # update the new value in the detector
@@ -190,16 +191,17 @@ def apply_adwin_updating_model(folder, logname, metrics, delta_detection, stable
             if final_trace_id > total_of_traces:
                 final_trace_id = total_of_traces
 
-            print(f'Discover a new model using traces from {i} to {final_trace_id - 1}')
-            log_for_model = EventLog(eventlog[i:final_trace_id])
-            # net, im, fm = inductive_miner.apply(log_for_model)
-            # net, im, fm = heuristics_miner.apply(log_for_model)
-            net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMf)
-            # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMd)
-            gviz_pn = pn_visualizer.apply(net, im, fm)
-            pn_visualizer.save(gviz_pn,
-                               os.path.join(output_folder, f'{logname}_PN_{model_no}_{i}_{final_trace_id - 1}.png'))
-            model_no += 1
+            if update_model:
+                print(f'Discover a new model using traces from {i} to {final_trace_id - 1}')
+                log_for_model = EventLog(eventlog[i:final_trace_id])
+                # net, im, fm = inductive_miner.apply(log_for_model)
+                # net, im, fm = heuristics_miner.apply(log_for_model)
+                net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMf)
+                # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMd)
+                gviz_pn = pn_visualizer.apply(net, im, fm)
+                pn_visualizer.save(gviz_pn,
+                                   os.path.join(output_folder, f'{logname}_PN_{model_no}_{i}_{final_trace_id - 1}.png'))
+                model_no += 1
 
     all_drifts = []
     for dimension in metrics.keys():
