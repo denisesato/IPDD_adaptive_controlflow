@@ -5,6 +5,7 @@ import skmultiflow
 import matplotlib.pyplot as plt
 from pm4py.objects.log.importer.xes import importer as xes_importer
 from pm4py.algo.discovery.inductive import algorithm as inductive_miner
+from pm4py.algo.discovery.heuristics import algorithm as heuristics_miner
 from pm4py.visualization.petri_net import visualizer as pn_visualizer
 from pm4py.algo.evaluation.generalization import algorithm as generalization_evaluator
 from pm4py.objects.log.obj import EventLog
@@ -126,7 +127,10 @@ def apply_adwin_updating_model(folder, logname, metrics, delta_detection, stable
     # derive the initial model using the parameter stable_period
     print(f'Initial model discovered using traces from 0 to {stable_period - 1}')
     log_for_model = EventLog(eventlog[0:stable_period])
-    net, im, fm = inductive_miner.apply(log_for_model)
+    # net, im, fm = inductive_miner.apply(log_for_model)
+    # net, im, fm = heuristics_miner.apply(log_for_model)
+    net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMf)
+    # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMd)
     gviz_pn = pn_visualizer.apply(net, im, fm)
     pn_visualizer.save(gviz_pn,
                        os.path.join(output_folder, f'{logname}_PN_INITIAL_0_{stable_period - 1}.png'))
@@ -188,7 +192,10 @@ def apply_adwin_updating_model(folder, logname, metrics, delta_detection, stable
 
             print(f'Discover a new model using traces from {i} to {final_trace_id - 1}')
             log_for_model = EventLog(eventlog[i:final_trace_id])
-            net, im, fm = inductive_miner.apply(log_for_model)
+            # net, im, fm = inductive_miner.apply(log_for_model)
+            # net, im, fm = heuristics_miner.apply(log_for_model)
+            net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMf)
+            # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMd)
             gviz_pn = pn_visualizer.apply(net, im, fm)
             pn_visualizer.save(gviz_pn,
                                os.path.join(output_folder, f'{logname}_PN_{model_no}_{i}_{final_trace_id - 1}.png'))
