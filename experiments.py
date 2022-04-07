@@ -240,9 +240,7 @@ def dataset1_quality_strategie():
 
 def dataset1_quality_fixed_window_strategie():
     folder = 'data/input/logs/Controlflow/dataset1'
-    logname = 'cf5k.xes'
-    initial_trace_for_model = 250
-    final_trace_for_model = 499
+    logname = 'cd5k.xes'
     winsize = 100
     winstep = 100
     out_folder = 'data/output/windowing'

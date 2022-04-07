@@ -352,7 +352,7 @@ def apply_adwin_on_quality_metrics_fixed_window(folder, logname, output_folder, 
     # convert to interval log, if no interval log is provided as input this line has no effect
     eventlog = interval_lifecycle.to_interval(original_eventlog)
     log_size = len(eventlog)
-    # derive the model for evaluating precision
+    # derive the model for evaluating the quality metrics
     log_for_model = EventLog(eventlog[0:winsize])
     net, im, fm = inductive_miner.apply(log_for_model)
     print(f'Initial model discovered using traces [0-{winsize-1}]')
@@ -372,37 +372,69 @@ def apply_adwin_on_quality_metrics_fixed_window(folder, logname, output_folder, 
     drifts = dict.fromkeys(metrics)
     for m in metrics.keys():
         values[m] = []
-        adwin[m] = ADWIN()
+        adwin[m] = ADWIN(0.2)
         drifts[m] = []
-
+    model_number = 1
     for initial_trace in range(0, log_size - winstep + 1, winstep):
         print(f'Reading traces {initial_trace} to {initial_trace+winsize-1}')
         drift_detected = False
-        log_for_precision = EventLog(eventlog[initial_trace:initial_trace+winsize])
-        precision = calculate_metric(metrics[QualityDimension.PRECISION.name], log_for_precision, net, im, fm)
-        # fill the precision for the traces in the window with the calculated value
+        earlier_change_point = 0
+        window = EventLog(eventlog[initial_trace:initial_trace+winsize])
+        precision = calculate_metric(metrics[QualityDimension.PRECISION.name], window, net, im, fm)
+        fitness = calculate_metric(metrics[QualityDimension.FITNESS.name], window, net, im, fm)
+        # fill the precision and fitness for the traces in the window with the calculated value
         for i in range(0, winstep):
             values[QualityDimension.PRECISION.name].append(precision)
-            # update the new values in the detector
-            adwin[QualityDimension.PRECISION.name].add_element(precision)
-            # check for drift
-            if adwin[QualityDimension.PRECISION.name].detected_change():
-                drift_detected = True
-                drifts[QualityDimension.PRECISION.name].append(initial_trace)
-                print(f'Metric [{QualityDimension.PRECISION.value}] detected a drift in trace: {initial_trace}')
-
-        # read trace by trace inside the window for calculating the fitness metric
-        for i in range(initial_trace, initial_trace+winsize):
-            trace_for_fitness = EventLog(eventlog[i:i+1])
-            fitness = calculate_metric(metrics[QualityDimension.FITNESS.name], trace_for_fitness, net, im, fm)
             values[QualityDimension.FITNESS.name].append(fitness)
             # update the new values in the detector
+            adwin[QualityDimension.PRECISION.name].add_element(precision)
             adwin[QualityDimension.FITNESS.name].add_element(fitness)
             # check for drift
+            if adwin[QualityDimension.PRECISION.name].detected_change():
+                if not drift_detected:
+                    # first detection - save change point
+                    earlier_change_point = initial_trace
+                    drift_detected = True
+                drifts[QualityDimension.PRECISION.name].append(initial_trace)
+                print(f'Metric [{QualityDimension.PRECISION.value}] detected a drift in trace: {initial_trace}')
+            # check for drift
             if adwin[QualityDimension.FITNESS.name].detected_change():
-                drift_detected = True
-                drifts[QualityDimension.FITNESS.name].append(i)
-                print(f'Metric [{QualityDimension.FITNESS.value}] detected a drift in trace: {i}')
+                if not drift_detected:
+                    # first detection - save change point
+                    earlier_change_point = initial_trace
+                    drift_detected = True
+                drifts[QualityDimension.FITNESS.name].append(initial_trace)
+                print(f'Metric [{QualityDimension.FITNESS.value}] detected a drift in trace: {initial_trace}')
+
+
+
+        # # read trace by trace inside the window for calculating the fitness metric
+        # for i in range(initial_trace, initial_trace+winsize):
+        #     trace_for_fitness = EventLog(eventlog[i:i+1])
+        #     fitness = calculate_metric(metrics[QualityDimension.FITNESS.name], trace_for_fitness, net, im, fm)
+        #     values[QualityDimension.FITNESS.name].append(fitness)
+        #     # update the new values in the detector
+        #     adwin[QualityDimension.FITNESS.name].add_element(fitness)
+        #     # check for drift
+        #     if adwin[QualityDimension.FITNESS.name].detected_change():
+        #         if not drift_detected:
+        #             # first detection - save change point
+        #             earlier_change_point = initial_trace
+        #             drift_detected = True
+        #         drifts[QualityDimension.FITNESS.name].append(i)
+        #         print(f'Metric [{QualityDimension.FITNESS.value}] detected a drift in trace: {i}')
+
+        if drift_detected:
+            # Discover a new model using stable_period
+            model_number += 1
+            log_for_model = EventLog(eventlog[earlier_change_point:earlier_change_point+winsize])
+            net, im, fm = inductive_miner.apply(log_for_model)
+            print(f'New model discovered using traces [{earlier_change_point}-{earlier_change_point+winsize-1}]')
+            gviz_pn = pn_visualizer.apply(net, im, fm)
+            if not os.path.exists(output_folder):
+                os.makedirs(output_folder)
+            pn_visualizer.save(gviz_pn, os.path.join(output_folder,
+                                                     f'PN_{model_number}_{logname}_{earlier_change_point}_{earlier_change_point+winsize-1}.png'))
 
     print(f'Total of values for PRECISION: {len(values[QualityDimension.PRECISION.name])}')
     print(f'Total of values for FITNESS: {len(values[QualityDimension.FITNESS.name])}')
