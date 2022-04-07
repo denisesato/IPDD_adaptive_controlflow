@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from detect_controlflow_drift import apply_adwin_on_quality_metrics, QualityDimension, apply_adwin_on_model_similarity, \
-    SimilarityMetric
+    SimilarityMetric, apply_adwin_on_quality_metrics_fixed_window
 
 
 def dataset1_similarity_strategie():
@@ -96,7 +96,7 @@ def dataset1_similarity_strategie():
     deltas = [0.002, 0.02, 0.1, 0.2, 0.3, 0.5]
 
     # for testing
-    # lognames = ['cb2.5k.xes']
+    lognames = ['cb2.5k.xes']
     windows = [100]
     deltas = [0.002]
     metrics = [
@@ -238,6 +238,19 @@ def dataset1_quality_strategie():
     df1.to_excel(os.path.join(output_folder, 'experiments_dataset1.xlsx'))
 
 
+def dataset1_quality_fixed_window_strategie():
+    folder = 'data/input/logs/Controlflow/dataset1'
+    logname = 'cf5k.xes'
+    initial_trace_for_model = 250
+    final_trace_for_model = 499
+    winsize = 100
+    winstep = 100
+    out_folder = 'data/output/windowing'
+
+    apply_adwin_on_quality_metrics_fixed_window(folder, logname, out_folder, winsize, winstep)
+
+
 if __name__ == '__main__':
-    dataset1_quality_strategie()
+    # dataset1_quality_strategie()
     # dataset1_similarity_strategie()
+    dataset1_quality_fixed_window_strategie()

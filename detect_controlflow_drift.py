@@ -1,7 +1,6 @@
 import os
 
 import pandas as pd
-import skmultiflow
 import matplotlib.pyplot as plt
 from pm4py.objects.log.importer.xes import importer as xes_importer
 from pm4py.algo.discovery.inductive import algorithm as inductive_miner
@@ -21,6 +20,8 @@ from pm4py.algo.evaluation.earth_mover_distance import algorithm as emd_evaluato
 from pm4py.algo.conformance.alignments.edit_distance import algorithm as logs_alignments
 from pm4py.evaluation.replay_fitness.variants.alignment_based import evaluate
 from enum import Enum
+
+from skmultiflow.drift_detection import ADWIN
 
 from compare_dfg import calculate_nodes_similarity, calculate_edges_similarity
 
@@ -141,7 +142,7 @@ def apply_adwin_on_quality_metrics(folder, logname, metrics, delta_detection, st
     values = {}
     for dimension in metrics.keys():
         # instantiate one detector for each evaluated dimension (fitness and precision)
-        adwin_detection[dimension] = skmultiflow.drift_detection.ADWIN(delta=delta_detection)
+        adwin_detection[dimension] = ADWIN(delta=delta_detection)
         drifts[dimension] = []
         values[dimension] = []
 
@@ -152,10 +153,23 @@ def apply_adwin_on_quality_metrics(folder, logname, metrics, delta_detection, st
     for i in range(0, total_of_traces):
         print(f'Reading trace [{i}]...')
         last_trace = EventLog(eventlog[i:(i + 1)])
+
+        # get all the traces since started the log or since the last drift
         if i >= final_trace_id:
-            all_traces = EventLog(eventlog[initial_trace_id:(i + 1)])
+            all_traces_since_last_drift = EventLog(eventlog[initial_trace_id:(i + 1)])
         else:
-            all_traces = EventLog(eventlog[initial_trace_id:final_trace_id])
+            all_traces_since_last_drift = EventLog(eventlog[initial_trace_id:final_trace_id])
+
+        # get the last n traces (n is defined by stable_period)
+        if i-stable_period < initial_trace_id:
+            # if we are still reading the traces from stable period
+            # get the first traces from the stable period
+            last_n_traces = EventLog(eventlog[initial_trace_id:stable_period])
+            print(f'Last n traces considered [{initial_trace_id}-{stable_period-1}]')
+        else:
+            last_n_traces = EventLog(eventlog[i-stable_period:i])
+            print(f'Last n traces considered [{i-stable_period}-{i-1}]')
+
         # check if one of the metrics report a drift
         drift_detected = False
         for dimension in metrics.keys():
@@ -166,10 +180,11 @@ def apply_adwin_on_quality_metrics(folder, logname, metrics, delta_detection, st
             if dimension == QualityDimension.FITNESS.name:
                 new_value = calculate_metric(metrics[dimension], last_trace, net, im, fm) * 100
             if dimension == QualityDimension.PRECISION.name:
-                # new_value = calculate_metric(metrics[dimension], all_traces, net, im, fm)
-                new_value = calculate_metric(metrics[dimension], last_trace, net, im, fm) * 100
+                # new_value = calculate_metric(metrics[dimension], all_traces_since_last_drift, net, im, fm)
+                # new_value = calculate_metric(metrics[dimension], last_trace, net, im, fm) * 100
+                new_value = calculate_metric(metrics[dimension], last_n_traces, net, im, fm) * 100
             if dimension == QualityDimension.GENERALIZATION.name:
-                # new_value = calculate_metric(metrics[dimension], all_traces, net, im, fm)
+                # new_value = calculate_metric(metrics[dimension], all_traces_since_last_drift, net, im, fm)
                 new_value = calculate_metric(metrics[dimension], last_trace, net, im, fm) * 100
             values[dimension].append(new_value)
             # update the new value in the detector
@@ -264,7 +279,7 @@ def apply_adwin_on_model_similarity(folder, logname, metrics, delta_detection, w
 
     for m in metrics:
         # instantiate one detector for each similarity metric
-        adwin_detection[m.name] = skmultiflow.drift_detection.ADWIN(delta=delta_detection)
+        adwin_detection[m.name] = ADWIN(delta=delta_detection)
         drifts[m.name] = []
         values[m.name] = []
         # fill the initial values for the initial model
@@ -323,3 +338,81 @@ def apply_adwin_on_model_similarity(folder, logname, metrics, delta_detection, w
     save_plot(metrics, values, output_folder, f'{logname}_d{delta_detection}_sp{window_size}', all_drifts,
               similarity=True)
     return all_drifts
+
+
+# nova estratégia, que utiliza janelamento para calcular a precisão
+# o fitness é calculado a cada novo trace
+# o ADWIN é aplicado utilizando as 2 métricas, e, em caso
+# de drift um novo modelo é gerado
+def apply_adwin_on_quality_metrics_fixed_window(folder, logname, output_folder, winsize, winstep):
+    # import the event log sorted by timestamp
+    variant = xes_importer.Variants.ITERPARSE
+    parameters = {variant.value.Parameters.TIMESTAMP_SORT: True}
+    original_eventlog = xes_importer.apply(os.path.join(folder, logname), variant=variant, parameters=parameters)
+    # convert to interval log, if no interval log is provided as input this line has no effect
+    eventlog = interval_lifecycle.to_interval(original_eventlog)
+    log_size = len(eventlog)
+    # derive the model for evaluating precision
+    log_for_model = EventLog(eventlog[0:winsize])
+    net, im, fm = inductive_miner.apply(log_for_model)
+    print(f'Initial model discovered using traces [0-{winsize-1}]')
+    gviz_pn = pn_visualizer.apply(net, im, fm)
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    pn_visualizer.save(gviz_pn, os.path.join(output_folder,
+                                             f'PN_INITIAL_{logname}_0_{winsize-1}.png'))
+
+    metrics = {
+        QualityDimension.FITNESS.name: 'fitnessTBR',
+        QualityDimension.PRECISION.name: 'precisionETC'
+    }
+
+    values = dict.fromkeys(metrics)
+    adwin = dict.fromkeys(metrics)
+    drifts = dict.fromkeys(metrics)
+    for m in metrics.keys():
+        values[m] = []
+        adwin[m] = ADWIN()
+        drifts[m] = []
+
+    for initial_trace in range(0, log_size - winstep + 1, winstep):
+        print(f'Reading traces {initial_trace} to {initial_trace+winsize-1}')
+        drift_detected = False
+        log_for_precision = EventLog(eventlog[initial_trace:initial_trace+winsize])
+        precision = calculate_metric(metrics[QualityDimension.PRECISION.name], log_for_precision, net, im, fm)
+        # fill the precision for the traces in the window with the calculated value
+        for i in range(0, winstep):
+            values[QualityDimension.PRECISION.name].append(precision)
+            # update the new values in the detector
+            adwin[QualityDimension.PRECISION.name].add_element(precision)
+            # check for drift
+            if adwin[QualityDimension.PRECISION.name].detected_change():
+                drift_detected = True
+                drifts[QualityDimension.PRECISION.name].append(initial_trace)
+                print(f'Metric [{QualityDimension.PRECISION.value}] detected a drift in trace: {initial_trace}')
+
+        # read trace by trace inside the window for calculating the fitness metric
+        for i in range(initial_trace, initial_trace+winsize):
+            trace_for_fitness = EventLog(eventlog[i:i+1])
+            fitness = calculate_metric(metrics[QualityDimension.FITNESS.name], trace_for_fitness, net, im, fm)
+            values[QualityDimension.FITNESS.name].append(fitness)
+            # update the new values in the detector
+            adwin[QualityDimension.FITNESS.name].add_element(fitness)
+            # check for drift
+            if adwin[QualityDimension.FITNESS.name].detected_change():
+                drift_detected = True
+                drifts[QualityDimension.FITNESS.name].append(i)
+                print(f'Metric [{QualityDimension.FITNESS.value}] detected a drift in trace: {i}')
+
+    print(f'Total of values for PRECISION: {len(values[QualityDimension.PRECISION.name])}')
+    print(f'Total of values for FITNESS: {len(values[QualityDimension.FITNESS.name])}')
+
+    all_drifts = []
+    for m in metrics.keys():
+        all_drifts += drifts[m]
+        df = pd.DataFrame(values[m])
+        df.to_excel(os.path.join(output_folder, f'{logname}_{m}.xlsx'))
+    all_drifts = list(set(all_drifts))
+    all_drifts.sort()
+    filename = f'{logname}_win{winsize}_step{winstep}.png'
+    save_plot(metrics, values, output_folder, filename, all_drifts)
