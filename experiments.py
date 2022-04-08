@@ -240,15 +240,128 @@ def dataset1_quality_strategie():
 
 def dataset1_quality_fixed_window_strategie():
     folder = 'data/input/logs/Controlflow/dataset1'
-    logname = 'cd5k.xes'
-    winsize = 100
-    winstep = 100
-    out_folder = 'data/output/windowing'
+    out_folder = 'data/output/windowing/dataset1'
 
-    apply_adwin_on_quality_metrics_fixed_window(folder, logname, out_folder, winsize, winstep)
+    lognames2500 = [
+        'cb2.5k.xes',
+        'cd2.5k.xes',
+        'cf2.5k.xes',
+        'cm2.5k.xes',
+        'cp2.5k.xes',
+        'fr2.5k.xes',
+        'IOR2.5k.xes',
+        'IRO2.5k.xes',
+        'lp2.5k.xes',
+        'OIR2.5k.xes',
+        'ORI2.5k.xes',
+        'pl2.5k.xes',
+        'pm2.5k.xes',
+        're2.5k.xes',
+        'RIO2.5k.xes',
+        'ROI2.5k.xes',
+        'rp2.5k.xes',
+        'sw2.5k.xes',
+    ]
+
+    lognames5000 = [
+        'cb5k.xes',
+        'cd5k.xes',
+        'cf5k.xes',
+        'cm5k.xes',
+        'cp5k.xes',
+        'fr5k.xes',
+        'IOR5k.xes',
+        'IRO5k.xes',
+        'lp5k.xes',
+        'OIR5k.xes',
+        'ORI5k.xes',
+        'pl5k.xes',
+        'pm5k.xes',
+        're5k.xes',
+        'RIO5k.xes',
+        'ROI5k.xes',
+        'rp5k.xes',
+        'sw5k.xes',
+    ]
+
+    lognames7500 = [
+        'cb7.5k.xes',
+        'cd7.5k.xes',
+        'cf7.5k.xes',
+        'cm7.5k.xes',
+        'cp7.5k.xes',
+        'fr7.5k.xes',
+        'IOR7.5k.xes',
+        'IRO7.5k.xes',
+        'lp7.5k.xes',
+        'OIR7.5k.xes',
+        'ORI7.5k.xes',
+        'pl7.5k.xes',
+        'pm7.5k.xes',
+        're7.5k.xes',
+        'RIO7.5k.xes',
+        'ROI7.5k.xes',
+        'rp7.5k.xes',
+        'sw7.5k.xes',
+    ]
+
+    lognames10000 = [
+        'cb10k.xes',
+        'cd10k.xes',
+        'cf10k.xes',
+        'cm10k.xes',
+        'cp10k.xes',
+        'fr10k.xes',
+        'IOR10k.xes',
+        'IRO10k.xes',
+        'lp10k.xes',
+        'OIR10k.xes',
+        'ORI10k.xes',
+        'pl10k.xes',
+        'pm10k.xes',
+        're10k.xes',
+        'RIO10k.xes',
+        'ROI10k.xes',
+        'rp10k.xes',
+        'sw10k.xes',
+    ]
+
+    lognames = lognames2500 + lognames5000 + lognames7500 + lognames10000
+    winsizes = [i for i in range(100, 1001, 100)]
+    deltas = [
+        0.002,
+        0.02,
+        0.2,
+        0.5,
+        1.0
+    ]
+
+    # for testing
+    # lognames = ['cm5k.xes']
+    # winsizes = [100]
+    # winsteps = 100
+    # apply_adwin_on_quality_metrics_fixed_window(folder, logname, out_folder, winsize, winstep)
+
+    for logname in lognames:
+        for winsize in winsizes:
+            for d in deltas:
+                apply_adwin_on_quality_metrics_fixed_window(folder, logname, out_folder, winsize, winsize, d)
+
+
+def dataset2_quality_fixed_window_strategie():
+    folder = 'data/input/logs/Controlflow/dataset2'
+    out_folder = 'data/output/windowing/dataset2'
+    lognames = ['ConditionalMove.xes']
+    # winsizes = [i for i in range(100, 1001, 100)]
+    winsizes = [100]
+
+    for logname in lognames:
+        for winsize in winsizes:
+            apply_adwin_on_quality_metrics_fixed_window(folder, logname, out_folder, winsize, winsize)
 
 
 if __name__ == '__main__':
     # dataset1_quality_strategie()
     # dataset1_similarity_strategie()
     dataset1_quality_fixed_window_strategie()
+    # dataset2_quality_fixed_window_strategie()

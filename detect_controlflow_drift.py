@@ -340,11 +340,10 @@ def apply_adwin_on_model_similarity(folder, logname, metrics, delta_detection, w
     return all_drifts
 
 
-# nova estratégia, que utiliza janelamento para calcular a precisão
-# o fitness é calculado a cada novo trace
+# nova estratégia, que utiliza janelamento para calcular fitness e precision
 # o ADWIN é aplicado utilizando as 2 métricas, e, em caso
 # de drift um novo modelo é gerado
-def apply_adwin_on_quality_metrics_fixed_window(folder, logname, output_folder, winsize, winstep):
+def apply_adwin_on_quality_metrics_fixed_window(folder, logname, output_folder, winsize, winstep, delta=None):
     # import the event log sorted by timestamp
     variant = xes_importer.Variants.ITERPARSE
     parameters = {variant.value.Parameters.TIMESTAMP_SORT: True}
@@ -356,11 +355,13 @@ def apply_adwin_on_quality_metrics_fixed_window(folder, logname, output_folder, 
     log_for_model = EventLog(eventlog[0:winsize])
     net, im, fm = inductive_miner.apply(log_for_model)
     print(f'Initial model discovered using traces [0-{winsize-1}]')
+    model_number = 1
     gviz_pn = pn_visualizer.apply(net, im, fm)
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-    pn_visualizer.save(gviz_pn, os.path.join(output_folder,
-                                             f'PN_INITIAL_{logname}_0_{winsize-1}.png'))
+    models_output_path = os.path.join(output_folder, 'models')
+    if not os.path.exists(models_output_path):
+        os.makedirs(models_output_path)
+    pn_visualizer.save(gviz_pn, os.path.join(models_output_path,
+                                             f'{logname}_PN_{model_number}_0_{winsize-1}.png'))
 
     metrics = {
         QualityDimension.FITNESS.name: 'fitnessTBR',
@@ -372,13 +373,16 @@ def apply_adwin_on_quality_metrics_fixed_window(folder, logname, output_folder, 
     drifts = dict.fromkeys(metrics)
     for m in metrics.keys():
         values[m] = []
-        adwin[m] = ADWIN(0.2)
+        if delta:
+            adwin[m] = ADWIN(delta=delta)
+        else:
+            adwin[m] = ADWIN()
         drifts[m] = []
-    model_number = 1
+
     for initial_trace in range(0, log_size - winstep + 1, winstep):
         print(f'Reading traces {initial_trace} to {initial_trace+winsize-1}')
         drift_detected = False
-        earlier_change_point = 0
+        change_point = 0
         window = EventLog(eventlog[initial_trace:initial_trace+winsize])
         precision = calculate_metric(metrics[QualityDimension.PRECISION.name], window, net, im, fm)
         fitness = calculate_metric(metrics[QualityDimension.FITNESS.name], window, net, im, fm)
@@ -393,48 +397,28 @@ def apply_adwin_on_quality_metrics_fixed_window(folder, logname, output_folder, 
             if adwin[QualityDimension.PRECISION.name].detected_change():
                 if not drift_detected:
                     # first detection - save change point
-                    earlier_change_point = initial_trace
+                    change_point = initial_trace+winsize
                     drift_detected = True
-                drifts[QualityDimension.PRECISION.name].append(initial_trace)
-                print(f'Metric [{QualityDimension.PRECISION.value}] detected a drift in trace: {initial_trace}')
+                drifts[QualityDimension.PRECISION.name].append(change_point)
+                print(f'Metric [{QualityDimension.PRECISION.value}] detected a drift in trace: {change_point}')
             # check for drift
             if adwin[QualityDimension.FITNESS.name].detected_change():
                 if not drift_detected:
                     # first detection - save change point
-                    earlier_change_point = initial_trace
+                    change_point = initial_trace+winsize
                     drift_detected = True
-                drifts[QualityDimension.FITNESS.name].append(initial_trace)
-                print(f'Metric [{QualityDimension.FITNESS.value}] detected a drift in trace: {initial_trace}')
-
-
-
-        # # read trace by trace inside the window for calculating the fitness metric
-        # for i in range(initial_trace, initial_trace+winsize):
-        #     trace_for_fitness = EventLog(eventlog[i:i+1])
-        #     fitness = calculate_metric(metrics[QualityDimension.FITNESS.name], trace_for_fitness, net, im, fm)
-        #     values[QualityDimension.FITNESS.name].append(fitness)
-        #     # update the new values in the detector
-        #     adwin[QualityDimension.FITNESS.name].add_element(fitness)
-        #     # check for drift
-        #     if adwin[QualityDimension.FITNESS.name].detected_change():
-        #         if not drift_detected:
-        #             # first detection - save change point
-        #             earlier_change_point = initial_trace
-        #             drift_detected = True
-        #         drifts[QualityDimension.FITNESS.name].append(i)
-        #         print(f'Metric [{QualityDimension.FITNESS.value}] detected a drift in trace: {i}')
+                drifts[QualityDimension.FITNESS.name].append(change_point)
+                print(f'Metric [{QualityDimension.FITNESS.value}] detected a drift in trace: {change_point}')
 
         if drift_detected:
             # Discover a new model using stable_period
             model_number += 1
-            log_for_model = EventLog(eventlog[earlier_change_point:earlier_change_point+winsize])
+            log_for_model = EventLog(eventlog[change_point:change_point+winsize])
             net, im, fm = inductive_miner.apply(log_for_model)
-            print(f'New model discovered using traces [{earlier_change_point}-{earlier_change_point+winsize-1}]')
+            print(f'New model discovered using traces [{change_point}-{change_point+winsize-1}]')
             gviz_pn = pn_visualizer.apply(net, im, fm)
-            if not os.path.exists(output_folder):
-                os.makedirs(output_folder)
-            pn_visualizer.save(gviz_pn, os.path.join(output_folder,
-                                                     f'PN_{model_number}_{logname}_{earlier_change_point}_{earlier_change_point+winsize-1}.png'))
+            pn_visualizer.save(gviz_pn, os.path.join(models_output_path,
+                                                     f'{logname}_PN_{model_number}_{change_point}_{change_point+winsize-1}.png'))
 
     print(f'Total of values for PRECISION: {len(values[QualityDimension.PRECISION.name])}')
     print(f'Total of values for FITNESS: {len(values[QualityDimension.FITNESS.name])}')
