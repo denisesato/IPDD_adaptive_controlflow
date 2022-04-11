@@ -31,8 +31,9 @@ def read_drifts_prodrift(file):
     for line in lines:
         if line.startswith('('):
             change_point = line[line.index('trace: ') + len('trace: '):line.index(' (')]
-            delay = line[line.index('reading ') + len('reading '):line.index(' traces.')]
             reported_drifts.append(change_point)
+            detected_at = line[line.index('reading ') + len('reading '):line.index(' traces.')]
+            delay = int(detected_at) - int(change_point)
             reported_delays.append(delay)
     file.close()
     return convert_list_to_int(reported_drifts), convert_list_to_int(reported_delays)
