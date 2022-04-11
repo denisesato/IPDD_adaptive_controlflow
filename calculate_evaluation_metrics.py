@@ -1,6 +1,9 @@
 import os
 import pandas as pd
 
+change_points_key = 'drifts - '
+detected_at_key = 'detected at - '
+
 
 def calculate_f_score(tp, fp, fn):
     if tp + fp > 0:
@@ -23,22 +26,31 @@ def calculate_mean_delay(total_distance, tp):
     return total_distance / tp
 
 
-def calculate_metrics(metrics, detected_drifts, actual_drifts_informed, total_of_instances, et=0):
+# Calculate the metrics F-score, mean delay, and FPR (false positive rate)
+# The f-score consider a TP a drift reported after an actual drift + et (error tolerance)
+# The mean delay is the average of the delta between the trace where the drift was detected and the actual drift
+# The delays is the difference between the actual drift and the moment where it is detected
+# If the moment of detection occurs after the change point it should be informed in the parameter detected_at_list
+def calculate_metrics(metrics, detected_drifts, actual_drifts_informed, total_of_instances, et, detected_at_list=None):
     real_drifts = actual_drifts_informed.copy()
     # sort the both lists (real and detected drifts)
     real_drifts.sort()
     detected_drifts.sort()
+    if detected_at_list:
+        detected_at_list.sort()
 
     # create lists to store the tp's and fp's
     tp_list = []
     fp_list = []
     total_distance = 0
-    for detected_cp in detected_drifts:
+    for i, detected_cp in enumerate(detected_drifts):
         tp_found = False
         for real_cp in real_drifts:
+            if detected_at_list:
+                dist_detection = detected_at_list[i] - real_cp
             dist = detected_cp - real_cp
             if 0 <= dist <= et:
-                total_distance += dist
+                total_distance += dist_detection
                 tp_list.append(detected_cp)
                 tp_found = True
                 real_drifts.remove(real_cp)
@@ -63,7 +75,7 @@ def calculate_metrics(metrics, detected_drifts, actual_drifts_informed, total_of
     return metrics_result
 
 
-def calculate_metrics_dataset1(filepath, filename, metrics, scenarios, actual_change_points, number_of_instances,
+def calculate_metrics_dataset1(filepath, filename, metrics, logsizes, actual_change_points, number_of_instances,
                                error_tolerance, save_input_for_calculation=False):
     input_filename = os.path.join(filepath, filename)
     print(f'*****************************************************************')
@@ -72,28 +84,48 @@ def calculate_metrics_dataset1(filepath, filename, metrics, scenarios, actual_ch
     df = pd.read_excel(input_filename, index_col=0)
     complete_results = df.T.to_dict()
     metrics_results = {}
-    for key in complete_results.keys():
-        metrics_results[key] = {}
-        scenario = [i for i in scenarios
-                    if i in key][0]
-        change_points = complete_results[key]
-        for scenario_configuration in change_points.keys():
-            # get detected drifts and convert to a list of integers
-            detected_change_points = change_points[scenario_configuration][1:-1].split(",")
-            detected_drifts = convert_list_to_int(detected_change_points)
-            metrics = calculate_metrics(metrics, detected_drifts, actual_change_points[scenario],
-                                        number_of_instances[scenario], error_tolerance[scenario])
+    for logname in complete_results.keys():
+        metrics_results[logname] = {}
+        logsize = [i for i in logsizes
+                   if i in logname][0]
+
+        change_points = {}
+        detected_at = {}
+        for key in complete_results[logname].keys():
+            # get list of trace ids from excel and convert to a list of integers
+            trace_ids_list = complete_results[logname][key][1:-1].split(",")
+            trace_ids_list = convert_list_to_int(trace_ids_list)
+
+            # insert into change points or detected points
+            if change_points_key in key:
+                configuration = key[len(change_points_key):]
+                change_points[configuration] = trace_ids_list
+            elif detected_at_key in key:
+                configuration = key[len(detected_at_key):]
+                detected_at[configuration] = trace_ids_list
+
+        for configuration in change_points.keys():
+            # get the detected at information if available and convert to a list of integers
+            if len(detected_at) > 0:
+                metrics = calculate_metrics(metrics, change_points[configuration], actual_change_points[logsize],
+                                            number_of_instances[logsize], error_tolerance[logsize],
+                                            detected_at[configuration])
+            else:
+                metrics = calculate_metrics(metrics, change_points, actual_change_points[logsize],
+                                            number_of_instances[logsize], error_tolerance[logsize])
             # add the calculated metrics to the dictionary
             if save_input_for_calculation:
-                metrics_results[key][f'Detected drifts {scenario_configuration}'] = detected_drifts
-                metrics_results[key][f'Real drifts {scenario_configuration}'] = actual_change_points[scenario]
+                metrics_results[logname][f'Detected drifts {configuration}'] = change_points[configuration]
+                if len(detected_at) > 0:
+                    metrics_results[logname][f'Detected at {configuration}'] = detected_at[configuration]
+                metrics_results[logname][f'Real drifts {configuration}'] = actual_change_points[logsize]
             # print(f'-----------------------------------------------------------------')
             # print(f'Scenario: {key} - {scenario} - {delta}')
             # print(f'Real change points = {actual_change_points[scenario]}')
             # print(f'Error tolerance = {error_tolerance[scenario]}')
             # print(f'Detected change points = {detected_drifts}')
             for m in metrics:
-                metrics_results[key][f'{m} {scenario_configuration}'] = metrics[m]
+                metrics_results[logname][f'{m} {configuration}'] = metrics[m]
                 # print(f'{m} {scenario_configuration} = {metrics[m]}')
             # print(f'-----------------------------------------------------------------')
     df = pd.DataFrame(metrics_results).T
@@ -114,4 +146,3 @@ def convert_list_to_int(string_list):
         integer_map = map(int, string_list.copy())
         integer_list = list(integer_map)
     return integer_list
-

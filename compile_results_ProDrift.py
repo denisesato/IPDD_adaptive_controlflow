@@ -2,6 +2,8 @@ import os
 import re
 import pandas as pd
 
+from calculate_evaluation_metrics import change_points_key, detected_at_key
+
 
 def get_Apromore_files(log_file_path, key, ftype):
     # get the .txt files with the results reported by Apromore
@@ -27,16 +29,15 @@ def read_drifts_prodrift(file):
     lines = file.readlines()
 
     reported_drifts = []
-    reported_delays = []
+    detected_at_list = []
     for line in lines:
         if line.startswith('('):
             change_point = line[line.index('trace: ') + len('trace: '):line.index(' (')]
             reported_drifts.append(change_point)
             detected_at = line[line.index('reading ') + len('reading '):line.index(' traces.')]
-            delay = int(detected_at) - int(change_point)
-            reported_delays.append(delay)
+            detected_at_list.append(detected_at)
     file.close()
-    return convert_list_to_int(reported_drifts), convert_list_to_int(reported_delays)
+    return convert_list_to_int(reported_drifts), convert_list_to_int(detected_at_list)
 
 
 def compile_results_from_prodrift(filepath, filenames):
@@ -58,15 +59,15 @@ def compile_results_from_prodrift(filepath, filenames):
             print(f'Filename {file} do not follow the expected patter {pattern} - EXITING...')
             return
 
-        detected_drifts, detected_delays = read_drifts_prodrift(complete_filename)
+        detected_drifts, detected_at = read_drifts_prodrift(complete_filename)
         logname = pattern + logsize
-        configuration_drifts = approach + ' ' + winsize + ' drifts'
-        configuration_delays = approach + ' ' + winsize + ' delays'
+        configuration_drifts = change_points_key + approach + ' ' + winsize
+        configuration_delays = detected_at_key + approach + ' ' + winsize
         if logname not in results.keys():
             results[logname] = {}
 
         results[logname][configuration_drifts] = detected_drifts
-        results[logname][configuration_delays] = detected_delays
+        results[logname][configuration_delays] = detected_at
     df = pd.DataFrame(results).T
     out_filename = f'results_prodrift.xlsx'
     out_complete_filename = os.path.join(filepath, out_filename)

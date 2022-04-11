@@ -430,5 +430,5 @@ def apply_adwin_on_quality_metrics_fixed_window(folder, logname, output_folder, 
         df.to_excel(os.path.join(output_folder, f'{logname}_{m}.xlsx'))
     all_drifts = list(set(all_drifts))
     all_drifts.sort()
-    filename = f'{logname}_win{winsize}_step{winstep}.png'
+    filename = f'{logname}_win{winsize}_step{winstep}'
     save_plot(metrics, values, output_folder, filename, all_drifts)
