@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from detect_controlflow_drift import pply_detector_on_quality_metrics_trace_by_trace, QualityDimension, apply_detectir_on_model_similarity_fixed_window, \
+from detect_controlflow_drift import apply_detector_on_quality_metrics_trace_by_trace, QualityDimension, apply_detector_on_model_similarity_fixed_window, \
     SimilarityMetric, apply_detector_on_quality_metrics_fixed_window
 
 
@@ -112,7 +112,7 @@ def dataset1_similarity_strategie():
         drifts[log] = {}
         for w in windows:
             for d in deltas:
-                drifts[log][f'd={d} w={w}'] = apply_detectir_on_model_similarity_fixed_window(input_folder, log, metrics, d, w,
+                drifts[log][f'd={d} w={w}'] = apply_detector_on_model_similarity_fixed_window(input_folder, log, metrics, d, w,
                                                                                               output_folder)
 
     df1 = pd.DataFrame.from_dict(drifts, orient='index')
@@ -231,8 +231,8 @@ def dataset1_quality_strategie():
         drifts[log] = {}
         for sp in stable_periods:
             for d in deltas:
-                drifts[log][f'd={d} sp={sp}'] = pply_detector_on_quality_metrics_trace_by_trace(input_folder, log, metrics, d, sp,
-                                                                                                output_folder)
+                drifts[log][f'd={d} sp={sp}'] = apply_detector_on_quality_metrics_trace_by_trace(input_folder, log, metrics, d, sp,
+                                                                                                 output_folder)
 
     df1 = pd.DataFrame.from_dict(drifts, orient='index')
     df1.to_excel(os.path.join(output_folder, 'experiments_dataset1.xlsx'))
@@ -240,7 +240,7 @@ def dataset1_quality_strategie():
 
 def dataset1_quality_fixed_window_strategie():
     folder = 'data/input/logs/Controlflow/dataset1'
-    out_folder = 'data/output/windowing/dataset1'
+    out_folder = 'data/output/controlflow_adaptive/windowing/dataset1'
 
     lognames2500 = [
         'cb2.5k.xes',
@@ -345,7 +345,7 @@ def dataset1_quality_fixed_window_strategie():
     for logname in lognames:
         for winsize in winsizes:
             for d in deltas:
-                apply_detector_on_quality_metrics_fixed_window(folder, logname, out_folder, winsize, winsize, d)
+                apply_detector_on_quality_metrics_fixed_window(folder, logname, out_folder, winsize, winsize, d, 100)
 
 
 def dataset2_quality_fixed_window_strategie():

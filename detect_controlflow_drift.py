@@ -115,8 +115,8 @@ def calculate_metric(metric_name, log, net, im, fm):
 # it is possible to consider all the traces read since the last drift for calculating the metrics (commented)
 # when a drift is detected a new model is discovered using the next traces (stable_period)
 # the inductive miner is applied for discovering the model
-def pply_detector_on_quality_metrics_trace_by_trace(folder, logname, metrics, delta_detection, stable_period, output_folder,
-                                                    update_model=True):
+def apply_detector_on_quality_metrics_trace_by_trace(folder, logname, metrics, delta_detection, stable_period, output_folder,
+                                                     update_model=True):
     output_folder = f'{output_folder}_d{delta_detection}_sp{stable_period}'
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -251,7 +251,7 @@ def calculate_similarity_metric(m, initial_nodes, initial_edges, current_nodes, 
 # we apply a sliding window on each new trace, discover the new model and compare to the initial one
 # these metrics are inputted in the detector
 # if a drift is detected a new initial model is discovered
-def apply_detectir_on_model_similarity_fixed_window(folder, logname, metrics, delta_detection, window_size, output_folder):
+def apply_detector_on_model_similarity_fixed_window(folder, logname, metrics, delta_detection, window_size, output_folder):
     output_folder = f'{output_folder}_d{delta_detection}_w{window_size}'
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -345,7 +345,7 @@ def apply_detectir_on_model_similarity_fixed_window(folder, logname, metrics, de
 # nova estratégia, que utiliza janelamento para calcular fitness e precision
 # o ADWIN é aplicado utilizando as 2 métricas, e, em caso
 # de drift um novo modelo é gerado
-def apply_detector_on_quality_metrics_fixed_window(folder, logname, output_folder, winsize, winstep, delta=None):
+def apply_detector_on_quality_metrics_fixed_window(folder, logname, output_folder, winsize, winstep, delta=None, factor=1):
     # import the event log sorted by timestamp
     variant = xes_importer.Variants.ITERPARSE
     parameters = {variant.value.Parameters.TIMESTAMP_SORT: True}
@@ -359,7 +359,10 @@ def apply_detector_on_quality_metrics_fixed_window(folder, logname, output_folde
     print(f'Initial model discovered using traces [0-{winsize-1}]')
     model_number = 1
     gviz_pn = pn_visualizer.apply(net, im, fm)
-    models_output_path = os.path.join(output_folder, 'models')
+    models_folder = f'models_win{winsize}_step{winstep}_factor{factor}'
+    if delta:
+        models_folder = f'{models_folder}_delta{delta}'
+    models_output_path = os.path.join(output_folder, models_folder)
     if not os.path.exists(models_output_path):
         os.makedirs(models_output_path)
     pn_visualizer.save(gviz_pn, os.path.join(models_output_path,
@@ -386,8 +389,8 @@ def apply_detector_on_quality_metrics_fixed_window(folder, logname, output_folde
         drift_detected = False
         change_point = 0
         window = EventLog(eventlog[initial_trace:initial_trace+winsize])
-        precision = calculate_metric(metrics[QualityDimension.PRECISION.name], window, net, im, fm) * 100
-        fitness = calculate_metric(metrics[QualityDimension.FITNESS.name], window, net, im, fm) * 100
+        precision = calculate_metric(metrics[QualityDimension.PRECISION.name], window, net, im, fm) * factor
+        fitness = calculate_metric(metrics[QualityDimension.FITNESS.name], window, net, im, fm) * factor
         # fill the precision and fitness for the traces in the window with the calculated value
         for i in range(0, winstep):
             values[QualityDimension.PRECISION.name].append(precision)
@@ -432,5 +435,8 @@ def apply_detector_on_quality_metrics_fixed_window(folder, logname, output_folde
         df.to_excel(os.path.join(output_folder, f'{logname}_{m}.xlsx'))
     all_drifts = list(set(all_drifts))
     all_drifts.sort()
-    filename = f'{logname}_win{winsize}_step{winstep}'
+    filename = f'{logname}_win{winsize}_step{winstep}_factor{factor}'
+    if delta:
+        filename = f'{filename}_delta{delta}'
+
     save_plot(metrics, values, output_folder, filename, all_drifts)
