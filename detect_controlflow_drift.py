@@ -111,11 +111,12 @@ def calculate_metric(metric_name, log, net, im, fm):
 
 
 # apply the ADWIN detector (scikit-multiflow) in two quality metrics: fitness and precision
-# when a drift is detected a new model is discovered using the next traces
-# the stable_period define the number of traces to discover the process models
-# the inductive miner is applied
-def apply_adwin_on_quality_metrics(folder, logname, metrics, delta_detection, stable_period, output_folder,
-                                   update_model=True):
+# the metrics are calculated using the last trace read and the model generated using the first traces (stable_period)
+# it is possible to consider all the traces read since the last drift for calculating the metrics (commented)
+# when a drift is detected a new model is discovered using the next traces (stable_period)
+# the inductive miner is applied for discovering the model
+def pply_detector_on_quality_metrics_trace_by_trace(folder, logname, metrics, delta_detection, stable_period, output_folder,
+                                                    update_model=True):
     output_folder = f'{output_folder}_d{delta_detection}_sp{stable_period}'
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -129,9 +130,9 @@ def apply_adwin_on_quality_metrics(folder, logname, metrics, delta_detection, st
     # derive the initial model using the parameter stable_period
     print(f'Initial model discovered using traces from 0 to {stable_period - 1}')
     log_for_model = EventLog(eventlog[0:stable_period])
-    # net, im, fm = inductive_miner.apply(log_for_model)
+    net, im, fm = inductive_miner.apply(log_for_model)
     # net, im, fm = heuristics_miner.apply(log_for_model)
-    net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMf)
+    # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMf)
     # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMd)
     gviz_pn = pn_visualizer.apply(net, im, fm)
     pn_visualizer.save(gviz_pn,
@@ -180,12 +181,13 @@ def apply_adwin_on_quality_metrics(folder, logname, metrics, delta_detection, st
             if dimension == QualityDimension.FITNESS.name:
                 new_value = calculate_metric(metrics[dimension], last_trace, net, im, fm) * 100
             if dimension == QualityDimension.PRECISION.name:
-                # new_value = calculate_metric(metrics[dimension], all_traces_since_last_drift, net, im, fm)
-                # new_value = calculate_metric(metrics[dimension], last_trace, net, im, fm) * 100
-                new_value = calculate_metric(metrics[dimension], last_n_traces, net, im, fm) * 100
-            if dimension == QualityDimension.GENERALIZATION.name:
-                # new_value = calculate_metric(metrics[dimension], all_traces_since_last_drift, net, im, fm)
                 new_value = calculate_metric(metrics[dimension], last_trace, net, im, fm) * 100
+                # new_value = calculate_metric(metrics[dimension], all_traces_since_last_drift, net, im, fm) * 100
+                # new_value = calculate_metric(metrics[dimension], last_n_traces, net, im, fm) * 100
+            if dimension == QualityDimension.GENERALIZATION.name:
+                new_value = calculate_metric(metrics[dimension], last_trace, net, im, fm) * 100
+                # new_value = calculate_metric(metrics[dimension], all_traces_since_last_drift, net, im, fm)
+                # new_value = calculate_metric(metrics[dimension], last_n_traces, net, im, fm) * 100
             values[dimension].append(new_value)
             # update the new value in the detector
             adwin_detection[dimension].add_element(new_value)
@@ -209,9 +211,9 @@ def apply_adwin_on_quality_metrics(folder, logname, metrics, delta_detection, st
             if update_model:
                 print(f'Discover a new model using traces from {i} to {final_trace_id - 1}')
                 log_for_model = EventLog(eventlog[i:final_trace_id])
-                # net, im, fm = inductive_miner.apply(log_for_model)
+                net, im, fm = inductive_miner.apply(log_for_model)
                 # net, im, fm = heuristics_miner.apply(log_for_model)
-                net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMf)
+                # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMf)
                 # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMd)
                 gviz_pn = pn_visualizer.apply(net, im, fm)
                 pn_visualizer.save(gviz_pn,
@@ -249,7 +251,7 @@ def calculate_similarity_metric(m, initial_nodes, initial_edges, current_nodes, 
 # we apply a sliding window on each new trace, discover the new model and compare to the initial one
 # these metrics are inputted in the detector
 # if a drift is detected a new initial model is discovered
-def apply_adwin_on_model_similarity(folder, logname, metrics, delta_detection, window_size, output_folder):
+def apply_detectir_on_model_similarity_fixed_window(folder, logname, metrics, delta_detection, window_size, output_folder):
     output_folder = f'{output_folder}_d{delta_detection}_w{window_size}'
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -343,7 +345,7 @@ def apply_adwin_on_model_similarity(folder, logname, metrics, delta_detection, w
 # nova estratégia, que utiliza janelamento para calcular fitness e precision
 # o ADWIN é aplicado utilizando as 2 métricas, e, em caso
 # de drift um novo modelo é gerado
-def apply_adwin_on_quality_metrics_fixed_window(folder, logname, output_folder, winsize, winstep, delta=None):
+def apply_detector_on_quality_metrics_fixed_window(folder, logname, output_folder, winsize, winstep, delta=None):
     # import the event log sorted by timestamp
     variant = xes_importer.Variants.ITERPARSE
     parameters = {variant.value.Parameters.TIMESTAMP_SORT: True}
@@ -384,8 +386,8 @@ def apply_adwin_on_quality_metrics_fixed_window(folder, logname, output_folder, 
         drift_detected = False
         change_point = 0
         window = EventLog(eventlog[initial_trace:initial_trace+winsize])
-        precision = calculate_metric(metrics[QualityDimension.PRECISION.name], window, net, im, fm)
-        fitness = calculate_metric(metrics[QualityDimension.FITNESS.name], window, net, im, fm)
+        precision = calculate_metric(metrics[QualityDimension.PRECISION.name], window, net, im, fm) * 100
+        fitness = calculate_metric(metrics[QualityDimension.FITNESS.name], window, net, im, fm) * 100
         # fill the precision and fitness for the traces in the window with the calculated value
         for i in range(0, winstep):
             values[QualityDimension.PRECISION.name].append(precision)
