@@ -353,7 +353,6 @@ def apply_detector_on_model_similarity_trace_by_trace(folder, logname, metrics, 
 # if a drift is detected a new initial model is discovered
 def apply_detector_on_model_similarity_fixed_window(folder, logname, metrics, delta_detection, window_size,
                                                     output_folder, factor):
-    output_folder = f'{output_folder}_d{delta_detection}_w{window_size}'
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 

@@ -48,6 +48,8 @@ def calculate_metrics(metrics, detected_drifts, actual_drifts_informed, total_of
         for real_cp in real_drifts:
             if detected_at_list:
                 dist_detection = detected_at_list[i] - real_cp
+            else:
+                dist_detection = detected_cp - real_cp
             dist = detected_cp - real_cp
             if 0 <= dist <= et:
                 total_distance += dist_detection
@@ -111,7 +113,7 @@ def calculate_metrics_dataset1(filepath, filename, metrics, logsizes, actual_cha
                                             number_of_instances[logsize], error_tolerance[logsize],
                                             detected_at[configuration])
             else:
-                metrics = calculate_metrics(metrics, change_points, actual_change_points[logsize],
+                metrics = calculate_metrics(metrics, change_points[configuration], actual_change_points[logsize],
                                             number_of_instances[logsize], error_tolerance[logsize])
             # add the calculated metrics to the dictionary
             if save_input_for_calculation:
