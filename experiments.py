@@ -1,6 +1,7 @@
 import os
 import pandas as pd
-from detect_controlflow_drift import apply_detector_on_quality_metrics_trace_by_trace, QualityDimension, apply_detector_on_model_similarity_fixed_window, \
+from detect_controlflow_drift import apply_detector_on_quality_metrics_trace_by_trace, QualityDimension, \
+    apply_detector_on_model_similarity_fixed_window, \
     SimilarityMetric, apply_detector_on_quality_metrics_fixed_window
 
 
@@ -96,15 +97,15 @@ def dataset1_similarity_strategie():
     deltas = [0.002, 0.02, 0.1, 0.2, 0.3, 0.5]
 
     # for testing
-    lognames = ['cb2.5k.xes']
+    lognames = ['ROI2.5k.xes']
     windows = [100]
     deltas = [0.002]
     metrics = [
-        # SimilarityMetric.NODES,
+        SimilarityMetric.NODES,
         SimilarityMetric.EDGES
     ]
 
-    output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity_updating_model'
+    output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity_fixed_window'
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     drifts = dict.fromkeys(lognames)
@@ -112,8 +113,10 @@ def dataset1_similarity_strategie():
         drifts[log] = {}
         for w in windows:
             for d in deltas:
-                drifts[log][f'd={d} w={w}'] = apply_detector_on_model_similarity_fixed_window(input_folder, log, metrics, d, w,
-                                                                                              output_folder)
+                # drifts[log][f'd={d} w={w}'] = apply_detector_on_model_similarity_trace_by_trace(
+                #     input_folder, log, metrics, d, w, output_folder, 100)
+                drifts[log][f'd={d} w={w}'] = apply_detector_on_model_similarity_fixed_window(
+                    input_folder, log, metrics, d, w, output_folder, 100)
 
     df1 = pd.DataFrame.from_dict(drifts, orient='index')
     df1.to_excel(os.path.join(output_folder, 'experiments_model_similarity_dataset1.xlsx'))
@@ -231,7 +234,8 @@ def dataset1_quality_strategie():
         drifts[log] = {}
         for sp in stable_periods:
             for d in deltas:
-                drifts[log][f'd={d} sp={sp}'] = apply_detector_on_quality_metrics_trace_by_trace(input_folder, log, metrics, d, sp,
+                drifts[log][f'd={d} sp={sp}'] = apply_detector_on_quality_metrics_trace_by_trace(input_folder, log,
+                                                                                                 metrics, d, sp,
                                                                                                  output_folder)
 
     df1 = pd.DataFrame.from_dict(drifts, orient='index')
@@ -345,6 +349,7 @@ def dataset1_quality_fixed_window_strategie():
     for logname in lognames:
         for winsize in winsizes:
             for d in deltas:
+                apply_detector_on_quality_metrics_fixed_window(folder, logname, out_folder, winsize, winsize, d)
                 apply_detector_on_quality_metrics_fixed_window(folder, logname, out_folder, winsize, winsize, d, 100)
 
 
@@ -362,6 +367,6 @@ def dataset2_quality_fixed_window_strategie():
 
 if __name__ == '__main__':
     # dataset1_quality_strategie()
-    # dataset1_similarity_strategie()
-    dataset1_quality_fixed_window_strategie()
+    dataset1_similarity_strategie()
+    # dataset1_quality_fixed_window_strategie()
     # dataset2_quality_fixed_window_strategie()
