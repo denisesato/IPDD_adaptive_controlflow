@@ -361,7 +361,7 @@ def dataset1_quality_strategie_trace_by_trace():
 
 def dataset1_quality_strategie_fixed_window():
     folder = 'data/input/logs/Controlflow/dataset1'
-    out_folder = 'data/output/controlflow_adaptive/windowing/dataset1'
+    out_folder = 'data/output/controlflow_adaptive/detection_on_quality_metrics_fixed_window/dataset1'
 
     lognames2500 = [
         'cb2.5k.xes',
@@ -463,11 +463,16 @@ def dataset1_quality_strategie_fixed_window():
     # winsteps = 100
     # apply_adwin_on_quality_metrics_fixed_window(folder, logname, out_folder, winsize, winstep)
 
-    for logname in lognames:
+    drifts = dict.fromkeys(lognames)
+    for log in lognames:
+        drifts[log] = {}
         for winsize in winsizes:
             for d in deltas:
-                apply_detector_on_quality_metrics_fixed_window(folder, logname, out_folder, winsize, winsize, d)
-                apply_detector_on_quality_metrics_fixed_window(folder, logname, out_folder, winsize, winsize, d, 100)
+                drifts[log][f'{change_points_key}d={d} sp={sp} f={factor}'] = \
+                    apply_detector_on_quality_metrics_fixed_window(folder, log, out_folder, winsize, winsize, d)
+                factor = 100
+                drifts[log][f'{change_points_key}d={d} sp={sp} f={factor}'] = \
+                    apply_detector_on_quality_metrics_fixed_window(folder, log, out_folder, winsize, winsize, d, factor)
 
 
 def dataset2_quality_strategie_fixed_window():
