@@ -446,7 +446,7 @@ def apply_detector_on_model_similarity_fixed_window(folder, logname, metrics, de
     for m in metrics:
         all_drifts += drifts[m.name]
         df = pd.DataFrame(values[m.name])
-        df.to_excel(os.path.join(output_folder, f'{logname}_{m.value}.xlsx'))
+        df.to_excel(os.path.join(output_folder, f'{logname}_{m.value}_d{delta_detection}_sp{window_size}.xlsx'))
     all_drifts = list(set(all_drifts))
     all_drifts.sort()
     save_plot(metrics, values, output_folder, f'{logname}_d{delta_detection}_sp{window_size}', all_drifts,
