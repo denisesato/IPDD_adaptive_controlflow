@@ -97,7 +97,7 @@ def dataset1_similarity_strategie():
     deltas = [0.002, 0.02, 0.1, 0.2, 0.3, 0.5]
 
     # for testing
-    lognames = ['ROI2.5k.xes']
+    # lognames = ['ROI2.5k.xes']
     windows = [100]
     deltas = [0.002]
     metrics = [

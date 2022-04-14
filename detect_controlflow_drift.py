@@ -385,19 +385,18 @@ def apply_detector_on_model_similarity_fixed_window(folder, logname, metrics, de
         adwin_detection[m.name] = ADWIN(delta=delta_detection)
         drifts[m.name] = []
         values[m.name] = []
-        # fill the initial values for the initial model
         for i in range(0, window_size):
             values[m.name].append(factor)
             adwin_detection[m.name].add_element(factor)
+    # fill the initial values for the initial model
+    print(f'Added {window_size} values for similarity during the stable period')
 
     total_of_traces = len(eventlog)
-    initial_trace_id = window_size
-    for i in range(initial_trace_id, total_of_traces):
-        if i >= initial_trace_id:
-            print(f'Reading trace [{i}]...')
-            if i <= total_of_traces-window_size:
-                print(f'Updating current_window [{i}-{i+window_size-1}]...')
-                current_window = EventLog(eventlog[i:(i+window_size)])
+    initial_trace_id = 0
+    for i in range(window_size, total_of_traces):
+        if i >= initial_trace_id+window_size:
+            print(f'Reading trace [{i}] - Current model [{i-window_size+1}-{i}]')
+            current_window = EventLog(eventlog[i-window_size+1:(i+1)])
             # get the current activities
             current_activities = list(attributes_filter.get_attribute_values(current_window, "concept:name").keys())
             # get the current edges from the directly-follows graph
@@ -413,7 +412,7 @@ def apply_detector_on_model_similarity_fixed_window(folder, logname, metrics, de
                 # update the new value in the detector
                 adwin_detection[m.name].add_element(new_value)
                 if adwin_detection[m.name].detected_change():
-                    change_point = i+window_size-1
+                    change_point = i
                     # drift detected, save it
                     drifts[m.name].append(change_point)
                     print(f'Metric [{m.value}] - Drift detected at trace {change_point}')
@@ -425,17 +424,18 @@ def apply_detector_on_model_similarity_fixed_window(folder, logname, metrics, de
                     # reset the detectors to avoid a new drift during the stable period
                     adwin_detection[m.name].reset()
                     # fill the values for the new base model
-                    # and for the remaining values after the initial trace of the last window
-                    for trace_id in range(0, 2*(window_size-1)):
+                    for trace_id in range(0, window_size):
                         values[m.name].append(factor)
                         adwin_detection[m.name].add_element(factor)
+                print(f'Added {window_size} values for similarity during the stable period')
                 # discover a new model using the next traces (stable_period)
                 base_window = EventLog(eventlog[change_point:(change_point+window_size)])
                 # get the activities of the log
                 base_activities = list(attributes_filter.get_attribute_values(base_window, "concept:name").keys())
                 # mine the DFG (using Pm4Py)
                 dfg_base, start_activities, end_activities = discover_directly_follows_graph(base_window)
-                initial_trace_id = change_point+window_size
+                # define the next trace id that should be considered for updating the current model
+                initial_trace_id = change_point+1
                 # save the new model
                 model_no += 1
                 gviz = dfg_visualization.apply(dfg_base, log=base_window, parameters=parameters)
