@@ -222,7 +222,7 @@ def dataset1_similarity_strategie_fixed_window():
         SimilarityMetric.EDGES
     ]
 
-    output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity_fixed_window'
+    output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity_fixed_window/dataset1'
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     drifts = dict.fromkeys(lognames)
@@ -487,10 +487,97 @@ def dataset2_quality_strategie_fixed_window():
             apply_detector_on_quality_metrics_fixed_window(folder, logname, out_folder, winsize, winsize)
 
 
+def dataset3_similarity_strategie_fixed_window():
+    input_folder = 'data/input/logs/controlflow/dataset3'
+
+    logname_sudden_noise0_1000 = [
+        'sudden_trace_noise0_1000_cb.xes',
+        'sudden_trace_noise0_1000_cd.xes',
+        'sudden_trace_noise0_1000_cf.xes',
+        'sudden_trace_noise0_1000_cp.xes',
+        'sudden_trace_noise0_1000_IOR.xes',
+        'sudden_trace_noise0_1000_IRO.xes',
+        'sudden_trace_noise0_1000_lp.xes',
+        'sudden_trace_noise0_1000_OIR.xes',
+        'sudden_trace_noise0_1000_pl.xes',
+        'sudden_trace_noise0_1000_pm.xes',
+        'sudden_trace_noise0_1000_re.xes',
+        'sudden_trace_noise0_1000_RIO.xes',
+        'sudden_trace_noise0_1000_ROI.xes',
+        'sudden_trace_noise0_1000_rp.xes',
+        'sudden_trace_noise0_1000_sw.xes',
+    ]
+
+    logname_sudden_noise5_100 = [
+        'sudden_trace_noise5_100_cb.xes',
+        'sudden_trace_noise5_100_cd.xes',
+        'sudden_trace_noise5_100_cf.xes',
+        'sudden_trace_noise5_100_cp.xes',
+        'sudden_trace_noise5_100_IOR.xes',
+        'sudden_trace_noise5_100_IRO.xes',
+        'sudden_trace_noise5_100_lp.xes',
+        'sudden_trace_noise5_100_OIR.xes',
+        'sudden_trace_noise5_100_pl.xes',
+        'sudden_trace_noise5_100_pm.xes',
+        'sudden_trace_noise5_100_re.xes',
+        'sudden_trace_noise5_100_RIO.xes',
+        'sudden_trace_noise5_100_ROI.xes',
+        'sudden_trace_noise5_100_rp.xes',
+        'sudden_trace_noise5_100_sw.xes',
+    ]
+
+    logname_sudden_noise20_500 = [
+        'sudden_trace_noise20_500_cb.xes',
+        'sudden_trace_noise20_500_cd.xes',
+        'sudden_trace_noise20_500_cf.xes',
+        'sudden_trace_noise20_500_cp.xes',
+        'sudden_trace_noise20_500_IOR.xes',
+        'sudden_trace_noise20_500_IRO.xes',
+        'sudden_trace_noise20_500_lp.xes',
+        'sudden_trace_noise20_500_OIR.xes',
+        'sudden_trace_noise20_500_pl.xes',
+        'sudden_trace_noise20_500_pm.xes',
+        'sudden_trace_noise20_500_re.xes',
+        'sudden_trace_noise20_500_RIO.xes',
+        'sudden_trace_noise20_500_ROI.xes',
+        'sudden_trace_noise20_500_rp.xes',
+        'sudden_trace_noise20_500_sw.xes',
+    ]
+
+    lognames = logname_sudden_noise0_1000 + logname_sudden_noise5_100
+    windows = [i for i in range(100, 1000, 50)]
+    deltas = [0.002, 0.02, 0.1, 0.2, 0.3, 0.5]
+
+    # for testing
+    # lognames = ['ROI2.5k.xes']
+    lognames = logname_sudden_noise20_500
+    windows = [20]
+    deltas = [0.002]
+    metrics = [
+        SimilarityMetric.NODES,
+        SimilarityMetric.EDGES
+    ]
+
+    output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity_fixed_window/dataset3'
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    drifts = dict.fromkeys(lognames)
+    for log in lognames:
+        drifts[log] = {}
+        for w in windows:
+            for d in deltas:
+                drifts[log][f'{change_points_key}d={d} w={w}'] = apply_detector_on_model_similarity_fixed_window(
+                    input_folder, log, metrics, d, w, output_folder, 100)
+
+    df1 = pd.DataFrame.from_dict(drifts, orient='index')
+    df1.to_excel(os.path.join(output_folder, 'experiments_model_similarity_fixed_window_dataset3.xlsx'))
+
+
 if __name__ == '__main__':
     # dataset1_quality_strategie_trace_by_trace()
     # dataset1_quality_strategie_fixed_window()
     # dataset2_quality_strategie_fixed_window()
     # dataset1_similarity_strategie_trace_by_trace()
-    dataset1_similarity_strategie_fixed_window()
+    # dataset1_similarity_strategie_fixed_window()
+    dataset3_similarity_strategie_fixed_window()
 
