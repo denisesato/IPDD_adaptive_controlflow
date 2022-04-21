@@ -4,7 +4,8 @@ import pandas as pd
 from calculate_evaluation_metrics import change_points_key
 from detect_controlflow_drift import apply_detector_on_quality_metrics_trace_by_trace, QualityDimension, \
     apply_detector_on_model_similarity_fixed_window, \
-    SimilarityMetric, apply_detector_on_quality_metrics_fixed_window, apply_detector_on_model_similarity_trace_by_trace
+    SimilarityMetric, apply_detector_on_quality_metrics_fixed_window, apply_detector_on_model_similarity_trace_by_trace, \
+    apply_detector_on_model_similarity_fixed_window_NOVO
 
 
 def dataset1_similarity_strategie_trace_by_trace():
@@ -210,19 +211,19 @@ def dataset1_similarity_strategie_fixed_window():
     ]
 
     lognames = lognames2500 + lognames5000 + lognames7500 + lognames10000
-    windows = [i for i in range(100, 1000, 50)]
-    deltas = [0.002, 0.02, 0.1, 0.2, 0.3, 0.5]
-
-    # for testing
-    # lognames = ['ROI2.5k.xes']
-    windows = [100]
+    windows = [i for i in range(100, 1001, 100)]
     deltas = [0.002]
     metrics = [
-        SimilarityMetric.NODES,
+        # SimilarityMetric.NODES,
         SimilarityMetric.EDGES
     ]
 
-    output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity_fixed_window/dataset1'
+    # for testing
+    # lognames = ['cb2.5k.xes']
+    # windows = [200]
+    # deltas = [0.002]
+
+    output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity_fixed_window_NOVO/dataset1'
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     drifts = dict.fromkeys(lognames)
@@ -230,9 +231,7 @@ def dataset1_similarity_strategie_fixed_window():
         drifts[log] = {}
         for w in windows:
             for d in deltas:
-                # drifts[log][f'{change_points_key}d={d} w={w}'] = apply_detector_on_model_similarity_trace_by_trace(
-                #     input_folder, log, metrics, d, w, output_folder, 100)
-                drifts[log][f'{change_points_key}d={d} w={w}'] = apply_detector_on_model_similarity_fixed_window(
+                drifts[log][f'{change_points_key}d={d} w={w}'] = apply_detector_on_model_similarity_fixed_window_NOVO(
                     input_folder, log, metrics, d, w, output_folder, 100)
 
     df1 = pd.DataFrame.from_dict(drifts, orient='index')
@@ -578,6 +577,6 @@ if __name__ == '__main__':
     # dataset1_quality_strategie_fixed_window()
     # dataset2_quality_strategie_fixed_window()
     # dataset1_similarity_strategie_trace_by_trace()
-    # dataset1_similarity_strategie_fixed_window()
-    dataset3_similarity_strategie_fixed_window()
+    dataset1_similarity_strategie_fixed_window()
+    # dataset3_similarity_strategie_fixed_window()
 
