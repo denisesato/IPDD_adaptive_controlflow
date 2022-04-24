@@ -836,7 +836,7 @@ def apply_detector_on_quality_metrics_fixed_window(folder, logname, output_folde
 
 # Nova tentativa, agora calculando o FITNESS com o último trace
 # e a PRECISION os últimos traces desde o último setup só que com Footprints
-def apply_detector_on_quality_metrics_fixed_window_TESTE(folder, logname, output_folder, winsize, delta=None):
+def apply_detector_on_quality_metrics_fixed_window_TESTE(folder, logname, output_folder, winsize, delta=None, factor=1):
     # import the event log sorted by timestamp
     variant = xes_importer.Variants.ITERPARSE
     parameters = {variant.value.Parameters.TIMESTAMP_SORT: True}
@@ -890,15 +890,15 @@ def apply_detector_on_quality_metrics_fixed_window_TESTE(folder, logname, output
             # precision - calculated using all the traces inside the stable period
             traces_stable_period = EventLog(eventlog[initial_trace:initial_trace+winsize])
             # precision = calculate_metric(metrics[QualityDimension.PRECISION.name], traces_stable_period, net, im, fm)
-            precision = calculate_metric_FP(metrics[QualityDimension.PRECISION.name], traces_stable_period, tree) * 100
-            fitness = calculate_metric(metrics[QualityDimension.FITNESS.name], current_trace, net, im, fm) * 100
+            precision = calculate_metric_FP(metrics[QualityDimension.PRECISION.name], traces_stable_period, tree) * factor
+            fitness = calculate_metric(metrics[QualityDimension.FITNESS.name], current_trace, net, im, fm) * factor
         elif i >= initial_trace + winsize:
             print(f'Detection phase - reading trace {i}')
             window = EventLog(eventlog[i-winsize+1:i+1])
             # after the stable period calculate the metrics after reading a new trace
             # precision = calculate_metric(metrics[QualityDimension.PRECISION.name], window, net, im, fm)
-            precision = calculate_metric_FP(metrics[QualityDimension.PRECISION.name], window, tree) * 100
-            fitness = calculate_metric(metrics[QualityDimension.FITNESS.name], current_trace, net, im, fm) * 100
+            precision = calculate_metric_FP(metrics[QualityDimension.PRECISION.name], window, tree) * factor
+            fitness = calculate_metric(metrics[QualityDimension.FITNESS.name], current_trace, net, im, fm) * factor
 
         values[QualityDimension.PRECISION.name].append(precision)
         adwin[QualityDimension.PRECISION.name].add_element(precision)
@@ -950,16 +950,5 @@ def apply_detector_on_quality_metrics_fixed_window_TESTE(folder, logname, output
     filename = f'{logname}_win{winsize}'
     if delta:
         filename = f'{filename}_delta{delta}'
-
-    filename_fitness = f'{filename}_FITNESS'
-    metrics = {
-        QualityDimension.FITNESS.name: 'fitnessTBR',
-    }
-    save_plot(metrics, values, output_folder, filename_fitness, drifts[QualityDimension.FITNESS.name])
-
-    filename_precision = f'{filename}_PRECISION'
-    metrics = {
-        QualityDimension.PRECISION.name: 'precisionFP'
-    }
-    save_plot(metrics, values, output_folder, filename_precision, drifts[QualityDimension.PRECISION.name])
+    save_plot(metrics, values, output_folder, filename, all_drifts)
     return all_drifts

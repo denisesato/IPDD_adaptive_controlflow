@@ -568,8 +568,8 @@ def dataset1_quality_strategie_fixed_window():
     deltas = [0.002, 0.05, 0.1, 0.3]
 
     # for testing
-    # lognames = ['cb2.5k.xes']
-    winsizes = [100]
+    lognames = ['cd5k.xes']
+    winsizes = [200]
     deltas = [0.002]
 
     drifts = dict.fromkeys(lognames)
@@ -584,7 +584,7 @@ def dataset1_quality_strategie_fixed_window():
                 # drifts[log][f'{change_points_key}d={d} w={winsize} f={factor}'] = \
                 #     apply_detector_on_quality_metrics_fixed_window(folder, log, output_folder, winsize, d, factor)
                 drifts[log][f'{change_points_key}d={d} w={winsize}'] = \
-                    apply_detector_on_quality_metrics_fixed_window_TESTE(folder, log, output_folder, winsize, d)
+                    apply_detector_on_quality_metrics_fixed_window_TESTE(folder, log, output_folder, winsize, d, 100)
 
     df1 = pd.DataFrame.from_dict(drifts, orient='index')
     df1.to_excel(os.path.join(output_folder, 'experiments_quality_fixed_window_dataset1.xlsx'))

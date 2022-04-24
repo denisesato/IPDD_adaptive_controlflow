@@ -44,9 +44,15 @@ def dataset1():
         'FPR'
     ]
 
-    ipdd_quality_trace_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace//dataset1'
-    ipdd_quality_trace_filename = 'experiments_quality_trace_by_trace_dataset1.xlsx'
-    calculate_metrics_dataset1(ipdd_quality_trace_path, ipdd_quality_trace_filename, metrics, scenarios,
+    # ipdd_quality_trace_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace//dataset1'
+    # ipdd_quality_trace_filename = 'experiments_quality_trace_by_trace_dataset1.xlsx'
+    # calculate_metrics_dataset1(ipdd_quality_trace_path, ipdd_quality_trace_filename, metrics, scenarios,
+    #                            actual_change_points, number_of_instances,
+    #                            error_tolerance, save_input_for_calculation=True)
+
+    ipdd_quality_windowing_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output//controlflow_adaptive//detection_on_quality_metrics_fixed_window_w100_d0.1_COMPLETO//dataset1'
+    ipdd_quality_windowing_filename = 'experiments_quality_fixed_window_dataset1_w100.xlsx'
+    calculate_metrics_dataset1(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, metrics, scenarios,
                                actual_change_points, number_of_instances,
                                error_tolerance, save_input_for_calculation=True)
 
