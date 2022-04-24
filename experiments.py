@@ -568,9 +568,9 @@ def dataset1_quality_strategie_fixed_window():
     deltas = [0.002, 0.05, 0.1, 0.3]
 
     # for testing
-    lognames = ['cd5k.xes']
-    winsizes = [200]
-    deltas = [0.002]
+    # lognames = ['cd5k.xes']
+    # winsizes = [200]
+    # deltas = [0.002]
 
     drifts = dict.fromkeys(lognames)
     for log in lognames:
