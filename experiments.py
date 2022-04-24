@@ -5,7 +5,7 @@ from calculate_evaluation_metrics import change_points_key
 from detect_controlflow_drift import apply_detector_on_quality_metrics_trace_by_trace, QualityDimension, \
     apply_detector_on_model_similarity_fixed_window, \
     SimilarityMetric, apply_detector_on_quality_metrics_fixed_window, apply_detector_on_model_similarity_trace_by_trace, \
-    apply_detector_on_model_similarity_fixed_window_NOVO
+    apply_detector_on_model_similarity_fixed_window_NOVO, apply_detector_on_quality_metrics_fixed_window_TESTE
 
 
 def dataset1_similarity_strategie_trace_by_trace():
@@ -214,7 +214,7 @@ def dataset1_similarity_strategie_fixed_window():
 
     lognames = lognames2500 + lognames5000 + lognames7500 + lognames10000
     windows = [i for i in range(100, 1001, 100)]
-    deltas = [0.002]
+    deltas = [0.002, 0.05, 0.1, 0.3]
     metrics = [
         # SimilarityMetric.NODES,
         SimilarityMetric.EDGES
@@ -329,7 +329,7 @@ def dataset1_similarity_strategie_fixed_window_NOVO():
 
     lognames = lognames2500 + lognames5000 + lognames7500 + lognames10000
     windows = [i for i in range(100, 1001, 100)]
-    deltas = [0.002]
+    deltas = [0.002, 0.05, 0.1, 0.3]
     metrics = [
         # SimilarityMetric.NODES,
         SimilarityMetric.EDGES
@@ -444,8 +444,7 @@ def dataset1_quality_strategie_trace_by_trace():
 
     lognames = lognames2500 + lognames5000 + lognames7500 + lognames10000
     stable_periods = [i for i in range(100, 1001, 100)]
-    # deltas = [0.002, 0.05, 0.1, 0.3, 1.0]
-    deltas = [0.002]
+    deltas = [0.002, 0.05, 0.1, 0.3]
 
     # different metrics can be used for each dimension evaluated
     # by now we expected on metric for fitness quality dimension and other for precision quality dimension
@@ -456,9 +455,9 @@ def dataset1_quality_strategie_trace_by_trace():
     }
 
     # for testing
-    lognames = ['cd5k.xes']
-    stable_periods = [100]
-    deltas = [0.02]
+    # lognames = ['cd5k.xes']
+    # stable_periods = [100]
+    # deltas = [0.02]
 
     output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_trace_by_trace/dataset1'
     if not os.path.exists(output_folder):
@@ -468,7 +467,7 @@ def dataset1_quality_strategie_trace_by_trace():
         drifts[log] = {}
         for sp in stable_periods:
             for d in deltas:
-                drifts[log][f'd={d} sp={sp}'] = apply_detector_on_quality_metrics_trace_by_trace(input_folder, log,
+                drifts[log][f'{change_points_key}d={d} sp={sp}'] = apply_detector_on_quality_metrics_trace_by_trace(input_folder, log,
                                                                                                  metrics, d, sp,
                                                                                                  output_folder)
 
@@ -566,31 +565,26 @@ def dataset1_quality_strategie_fixed_window():
 
     lognames = lognames2500 + lognames5000 + lognames7500 + lognames10000
     winsizes = [i for i in range(100, 1001, 100)]
-    # deltas = [
-    #     0.002,
-    #     0.02,
-    #     0.2,
-    #     0.5,
-    #     1.0
-    # ]
-    deltas = [0.002]
+    deltas = [0.002, 0.05, 0.1, 0.3]
 
     # for testing
-    # lognames = ['cm5k.xes']
-    # winsizes = [100]
-    # winsteps = 100
-    # apply_adwin_on_quality_metrics_fixed_window(folder, logname, out_folder, winsize, winstep)
+    # lognames = ['cb2.5k.xes']
+    winsizes = [100]
+    deltas = [0.002]
 
     drifts = dict.fromkeys(lognames)
     for log in lognames:
         drifts[log] = {}
         for winsize in winsizes:
             for d in deltas:
-                drifts[log][f'{change_points_key}d={d} w={winsize} f={factor}'] = \
-                    apply_detector_on_quality_metrics_fixed_window(folder, log, output_folder, winsize, winsize, d)
-                factor = 100
-                drifts[log][f'{change_points_key}d={d} w={winsize} f={factor}'] = \
-                    apply_detector_on_quality_metrics_fixed_window(folder, log, output_folder, winsize, winsize, d, factor)
+                # factor = 1
+                # drifts[log][f'{change_points_key}d={d} w={winsize} f={factor}'] = \
+                #     apply_detector_on_quality_metrics_fixed_window(folder, log, output_folder, winsize, d)
+                # factor = 100
+                # drifts[log][f'{change_points_key}d={d} w={winsize} f={factor}'] = \
+                #     apply_detector_on_quality_metrics_fixed_window(folder, log, output_folder, winsize, d, factor)
+                drifts[log][f'{change_points_key}d={d} w={winsize}'] = \
+                    apply_detector_on_quality_metrics_fixed_window_TESTE(folder, log, output_folder, winsize, d)
 
     df1 = pd.DataFrame.from_dict(drifts, orient='index')
     df1.to_excel(os.path.join(output_folder, 'experiments_quality_fixed_window_dataset1.xlsx'))
@@ -698,7 +692,7 @@ if __name__ == '__main__':
     # dataset3_similarity_strategie_fixed_window()
 
     # EXPERIMENTS USING DATASET 1
-    dataset1_quality_strategie_trace_by_trace()
+    # dataset1_quality_strategie_trace_by_trace()
     dataset1_quality_strategie_fixed_window()
-    dataset1_similarity_strategie_fixed_window()
-    dataset1_similarity_strategie_fixed_window_NOVO()
+    # dataset1_similarity_strategie_fixed_window()
+    # dataset1_similarity_strategie_fixed_window_NOVO()

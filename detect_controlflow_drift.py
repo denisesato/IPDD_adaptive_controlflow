@@ -19,6 +19,8 @@ from pm4py.algo.simulation.playout.petri_net import algorithm as simulator
 from pm4py.algo.evaluation.earth_mover_distance import algorithm as emd_evaluator
 from pm4py.algo.conformance.alignments.edit_distance import algorithm as logs_alignments
 from pm4py.evaluation.replay_fitness.variants.alignment_based import evaluate
+from pm4py.algo.conformance.footprints.util import evaluation
+from pm4py.algo.discovery.footprints import algorithm as fp_discovery
 from enum import Enum
 
 from skmultiflow.drift_detection import ADWIN
@@ -54,7 +56,7 @@ def save_plot(metrics, values, output_folder, output_name, drifts, similarity=Fa
         gap = 1
     xpos = range(0, no_values + 1, gap)
 
-    # draw a line for each reported drift by the fitness dimension
+    # draw a line for each reported drift
     indexes = [int(x) for x in drifts]
     for d in indexes:
         plt.axvline(x=d, label=d, color='k', linestyle=':')
@@ -70,6 +72,14 @@ def save_plot(metrics, values, output_folder, output_name, drifts, similarity=Fa
     plt.title(f'{output_name}')
     output_name = os.path.join(output_folder, f'{output_name}.png')
     plt.savefig(output_name, bbox_inches='tight')
+
+
+def calculate_metric_FP(metric_name, log, tree):
+    if metric_name == 'precisionFP':
+        fp_log = fp_discovery.apply(log, variant=fp_discovery.Variants.TRACE_BY_TRACE)
+        fp_tree = fp_discovery.apply(tree, variant=fp_discovery.Variants.PROCESS_TREE)
+        precision = evaluation.fp_precision(fp_log, fp_tree)
+        return precision
 
 
 def calculate_metric(metric_name, log, net, im, fm):
@@ -385,7 +395,7 @@ def apply_detector_on_model_similarity_fixed_window(folder, logname, metrics, de
     model_no = 1
     gviz = dfg_visualization.apply(base_dfg, log=base_window, parameters=parameters)
     dfg_visualization.save(gviz, os.path.join(models_path,
-                                              f'{logname}_w{window_size}_d{delta_detection}_DFG{model_no}_{0}_{window_size-1}.png'))
+                                              f'{logname}_w{window_size}_d{delta_detection}_DFG{model_no}_{0}_{window_size - 1}.png'))
 
     adwin_detection = {}
     drifts = {}
@@ -448,18 +458,18 @@ def apply_detector_on_model_similarity_fixed_window(folder, logname, metrics, de
                         adwin_detection[m.name].add_element(factor)
                 print(f'Added {window_size} values for similarity during the stable period')
                 # discover a new model using the next traces (stable_period)
-                base_window = EventLog(eventlog[change_point:(change_point+window_size)])
+                base_window = EventLog(eventlog[change_point:(change_point + window_size)])
                 # get the activities of the log
                 base_activities = list(attributes_filter.get_attribute_values(base_window, "concept:name").keys())
                 # mine the DFG (using Pm4Py)
                 base_dfg, start_activities, end_activities = discover_directly_follows_graph(base_window)
                 # define the next trace id that should be considered for updating the current model
-                initial_trace_id = change_point+1
+                initial_trace_id = change_point + 1
                 # save the new model
                 model_no += 1
                 gviz = dfg_visualization.apply(base_dfg, log=base_window, parameters=parameters)
                 dfg_visualization.save(gviz, os.path.join(models_path,
-                                                          f'{logname}_w{window_size}_d{delta_detection}_DFG{model_no}_{change_point}_{change_point+window_size-1}.png'))
+                                                          f'{logname}_w{window_size}_d{delta_detection}_DFG{model_no}_{change_point}_{change_point + window_size - 1}.png'))
 
     print(f'Size of values: {len(values[metrics[0].name])}')
     all_drifts = []
@@ -477,8 +487,12 @@ def apply_detector_on_model_similarity_fixed_window(folder, logname, metrics, de
 # Tentativa de evitar que o aumento do tamanho da janela reduza tanto a acurácia
 # Por exemplo, com a base cb2.5k, uma janela de 200 já acaba detectando somente 5 pontos
 # A mudança é que vou usar o current_dfg do momento que a mudança foi detectada para ser o novo modelo base
+# Além disso, é aplicada uma regra para definir o change point
+# Se algo é removido do modelo anterior, o change point é o início da janela (pois aquele comportamento removido na
+# verdade foi "esquecido"
+# Caso algo foi adicionado assume o final da janela (que é o trace que está lendo no momento)
 def apply_detector_on_model_similarity_fixed_window_NOVO(folder, logname, metrics, delta_detection, window_size,
-                                                    output_folder, factor):
+                                                         output_folder, factor):
     models_path = os.path.join(output_folder, 'models')
     if not os.path.exists(models_path):
         os.makedirs(models_path)
@@ -506,7 +520,7 @@ def apply_detector_on_model_similarity_fixed_window_NOVO(folder, logname, metric
     model_no = 1
     gviz = dfg_visualization.apply(base_dfg, log=base_window, parameters=parameters)
     dfg_visualization.save(gviz, os.path.join(models_path,
-                                              f'{logname}_w{window_size}_d{delta_detection}_DFG{model_no}_[0-{window_size-1}].png'))
+                                              f'{logname}_w{window_size}_d{delta_detection}_DFG{model_no}_[0-{window_size - 1}].png'))
 
     adwin_detection = {}
     drifts = {}
@@ -527,8 +541,8 @@ def apply_detector_on_model_similarity_fixed_window_NOVO(folder, logname, metric
     initial_trace_id = 0
     for i in range(window_size, total_of_traces):
         if i >= initial_trace_id + window_size:
-            print(f'Reading trace [{i}] - Current model [{i-window_size+1}-{i}]')
-            current_window = EventLog(eventlog[i-window_size+1:(i+1)])
+            print(f'Reading trace [{i}] - Current model [{i - window_size + 1}-{i}]')
+            current_window = EventLog(eventlog[i - window_size + 1:(i + 1)])
             # get the current activities
             current_activities = list(attributes_filter.get_attribute_values(current_window, "concept:name").keys())
             # get the current edges from the directly-follows graph
@@ -556,7 +570,7 @@ def apply_detector_on_model_similarity_fixed_window_NOVO(folder, logname, metric
                     if len(removed) > 0:
                         # if something is removed from the previous model, assume the beginning
                         # of the window as the change point
-                        change_point = i-window_size
+                        change_point = i - window_size
                     else:
                         # if new behavior have been detected assume the end of the current window as the change point
                         change_point = i
@@ -581,7 +595,7 @@ def apply_detector_on_model_similarity_fixed_window_NOVO(folder, logname, metric
                 model_no += 1
                 gviz = dfg_visualization.apply(base_dfg, log=base_window, parameters=parameters)
                 dfg_visualization.save(gviz, os.path.join(models_path,
-                                                          f'{logname}_w{window_size}_d{delta_detection}_DFG{model_no}_[{i-window_size+1}-{i}].png'))
+                                                          f'{logname}_w{window_size}_d{delta_detection}_DFG{model_no}_[{i - window_size + 1}-{i}].png'))
 
     print(f'Size of values: {len(values[metrics[0].name])}')
     all_drifts = []
@@ -599,8 +613,8 @@ def apply_detector_on_model_similarity_fixed_window_NOVO(folder, logname, metric
 # nova estratégia, que utiliza janelamento para calcular fitness e precision
 # o ADWIN é aplicado utilizando as 2 métricas, e, em caso
 # de drift um novo modelo é gerado
-def apply_detector_on_quality_metrics_fixed_window(folder, logname, output_folder, winsize, winstep, delta=None,
-                                                   factor=1):
+def apply_detector_on_quality_metrics_fixed_window_OLD(folder, logname, output_folder, winsize, winstep, delta=None,
+                                                       factor=1):
     # import the event log sorted by timestamp
     variant = xes_importer.Variants.ITERPARSE
     parameters = {variant.value.Parameters.TIMESTAMP_SORT: True}
@@ -671,6 +685,9 @@ def apply_detector_on_quality_metrics_fixed_window(folder, logname, output_folde
                 print(f'Metric [{QualityDimension.FITNESS.value}] detected a drift in trace: {change_point}')
 
         if drift_detected:
+            for m in metrics:
+                # reset the detectors to avoid a new drift during the stable period
+                adwin[m].reset()
             # Discover a new model using stable_period
             model_number += 1
             log_for_model = EventLog(eventlog[change_point:change_point + winsize])
@@ -695,3 +712,254 @@ def apply_detector_on_quality_metrics_fixed_window(folder, logname, output_folde
         filename = f'{filename}_delta{delta}'
 
     save_plot(metrics, values, output_folder, filename, all_drifts)
+
+
+# Após desenhar a estratégia eu percebi que talvez o problema seja porque no caso da precisão reportar drift
+# o change point deve ser o início da janela (já que é um comportamento que deixou de ocorrer)
+# Essa nova implementação segue o desenho
+# Precision é calculada utilizando a janela --> se detecta drift o change point é o início da janela
+# Fitness é calculado utilizando o último trace lido --> se detecta drift o change point é o trace
+def apply_detector_on_quality_metrics_fixed_window(folder, logname, output_folder, winsize, delta=None, factor=1):
+    # import the event log sorted by timestamp
+    variant = xes_importer.Variants.ITERPARSE
+    parameters = {variant.value.Parameters.TIMESTAMP_SORT: True}
+    original_eventlog = xes_importer.apply(os.path.join(folder, logname), variant=variant, parameters=parameters)
+    # convert to interval log, if no interval log is provided as input this line has no effect
+    eventlog = interval_lifecycle.to_interval(original_eventlog)
+    log_size = len(eventlog)
+    # derive the model for evaluating the quality metrics
+    initial_trace = 0
+    log_for_model = EventLog(eventlog[initial_trace:winsize])
+    net, im, fm = inductive_miner.apply(log_for_model)
+    print(f'Initial model discovered using traces [{initial_trace}-{winsize - 1}]')
+    model_number = 1
+    gviz_pn = pn_visualizer.apply(net, im, fm)
+    models_folder = f'models_win{winsize}_factor{factor}'
+    if delta:
+        models_folder = f'{models_folder}_delta{delta}'
+    models_output_path = os.path.join(output_folder, models_folder)
+    if not os.path.exists(models_output_path):
+        os.makedirs(models_output_path)
+    pn_visualizer.save(gviz_pn, os.path.join(models_output_path,
+                                             f'{logname}_PN_{model_number}_[{initial_trace}-{winsize - 1}].png'))
+
+    metrics = {
+        QualityDimension.FITNESS.name: 'fitnessTBR',
+        QualityDimension.PRECISION.name: 'precisionETC'
+    }
+
+    values = dict.fromkeys(metrics)
+    adwin = dict.fromkeys(metrics)
+    drifts = dict.fromkeys(metrics)
+    for m in metrics.keys():
+        values[m] = []
+        if delta:
+            adwin[m] = ADWIN(delta=delta)
+        else:
+            adwin[m] = ADWIN()
+        drifts[m] = []
+
+    for i in range(0, log_size):
+        print(f'Reading trace {i}')
+        print(f'Window [{i}-{i+winsize-1}]')
+
+        # calculate precision using the window
+        window = EventLog(eventlog[i:i + winsize])
+        if i == initial_trace or i >= initial_trace + winsize:
+            # calculate precision for the initial trace of the window
+            # OR after finishing the window
+            precision = calculate_metric(metrics[QualityDimension.PRECISION.name], window, net, im, fm)
+        values[QualityDimension.PRECISION.name].append(precision)
+        adwin[QualityDimension.PRECISION.name].add_element(precision)
+
+        # calculate fitness using the trace
+        trace = EventLog(eventlog[i:i + 1])
+        fitness = calculate_metric(metrics[QualityDimension.FITNESS.name], trace, net, im, fm) * factor
+        values[QualityDimension.FITNESS.name].append(fitness)
+        adwin[QualityDimension.FITNESS.name].add_element(fitness)
+
+        drift_detected = False
+        change_point = 0
+        # check for drift in precision
+        if adwin[QualityDimension.PRECISION.name].detected_change():
+            change_point = i
+            drifts[QualityDimension.PRECISION.name].append(change_point)
+            print(f'Metric [{QualityDimension.PRECISION.value}] detected a drift in trace: {change_point}')
+            drift_detected = True
+        # check for drift in fitness
+        elif adwin[QualityDimension.FITNESS.name].detected_change():
+            change_point = i
+            drift_detected = True
+            drifts[QualityDimension.FITNESS.name].append(change_point)
+            print(f'Metric [{QualityDimension.FITNESS.value}] detected a drift in trace: {change_point}')
+
+        if drift_detected:
+            for m in metrics:
+                # reset the detectors to avoid a new drift during the stable period
+                adwin[m].reset()
+            initial_trace = change_point
+            # Discover a new model using window
+            model_number += 1
+            log_for_model = EventLog(eventlog[initial_trace:initial_trace + winsize])
+            net, im, fm = inductive_miner.apply(log_for_model)
+            print(f'New model discovered using traces [{initial_trace}-{initial_trace + winsize - 1}]')
+            gviz_pn = pn_visualizer.apply(net, im, fm)
+            pn_visualizer.save(gviz_pn, os.path.join(models_output_path,
+                                                     f'{logname}_PN_{model_number}_[{initial_trace}-{initial_trace + winsize - 1}].png'))
+
+    print(f'Total of values for PRECISION: {len(values[QualityDimension.PRECISION.name])}')
+    print(f'Total of values for FITNESS: {len(values[QualityDimension.FITNESS.name])}')
+
+    all_drifts = []
+    for m in metrics.keys():
+        all_drifts += drifts[m]
+        df = pd.DataFrame(values[m])
+        df.to_excel(os.path.join(output_folder, f'{logname}_{m}_win{winsize}_factor{factor}.xlsx'))
+    all_drifts = list(set(all_drifts))
+    all_drifts.sort()
+    filename = f'{logname}_win{winsize}_factor{factor}'
+    if delta:
+        filename = f'{filename}_delta{delta}'
+
+    filename_fitness = f'{filename}_FITNESS'
+    metrics = {
+        QualityDimension.FITNESS.name: 'fitnessTBR',
+    }
+    save_plot(metrics, values, output_folder, filename_fitness, drifts[QualityDimension.FITNESS.name])
+
+    filename_precision = f'{filename}_PRECISION'
+    metrics = {
+        QualityDimension.PRECISION.name: 'precisionETC'
+    }
+    save_plot(metrics, values, output_folder, filename_precision, drifts[QualityDimension.PRECISION.name])
+
+
+# Nova tentativa, agora calculando o FITNESS com o último trace
+# e a PRECISION os últimos traces desde o último setup só que com Footprints
+def apply_detector_on_quality_metrics_fixed_window_TESTE(folder, logname, output_folder, winsize, delta=None):
+    # import the event log sorted by timestamp
+    variant = xes_importer.Variants.ITERPARSE
+    parameters = {variant.value.Parameters.TIMESTAMP_SORT: True}
+    original_eventlog = xes_importer.apply(os.path.join(folder, logname), variant=variant, parameters=parameters)
+    # convert to interval log, if no interval log is provided as input this line has no effect
+    eventlog = interval_lifecycle.to_interval(original_eventlog)
+    log_size = len(eventlog)
+    # derive the model for evaluating the quality metrics
+    initial_trace = 0
+    log_for_model = EventLog(eventlog[initial_trace:winsize])
+    net, im, fm = inductive_miner.apply(log_for_model)
+    tree = inductive_miner.apply_tree(log_for_model)
+    print(f'Initial model discovered using traces [{initial_trace}-{winsize - 1}]')
+    model_number = 1
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    # gviz_pn = pn_visualizer.apply(net, im, fm)
+    # models_folder = f'models_win{winsize}_factor{factor}'
+    # if delta:
+    #     models_folder = f'{models_folder}_delta{delta}'
+    # models_output_path = os.path.join(output_folder, models_folder)
+    # if not os.path.exists(models_output_path):
+    #     os.makedirs(models_output_path)
+    # pn_visualizer.save(gviz_pn, os.path.join(models_output_path,
+    #                                          f'{logname}_PN_{model_number}_[{initial_trace}-{winsize - 1}].png'))
+
+    metrics = {
+        QualityDimension.FITNESS.name: 'fitnessTBR',
+        QualityDimension.PRECISION.name: 'precisionFP'
+    }
+
+    values = dict.fromkeys(metrics)
+    adwin = dict.fromkeys(metrics)
+    drifts = dict.fromkeys(metrics)
+    for m in metrics.keys():
+        values[m] = []
+        if delta:
+            adwin[m] = ADWIN(delta=delta)
+        else:
+            adwin[m] = ADWIN()
+        drifts[m] = []
+
+    for i in range(0, log_size):
+        # print(f'Reading trace {i}')
+        current_trace = EventLog(eventlog[i:i+1])
+        if i == initial_trace:
+            print(f'Setup phase - traces [{initial_trace}-{initial_trace+winsize-1}]')
+            # initial of the stable period
+            # during the stable period we apply the same value for the metrics
+            # fitness - calculated using the initial trace of the stable period
+            # precision - calculated using all the traces inside the stable period
+            traces_stable_period = EventLog(eventlog[initial_trace:initial_trace+winsize])
+            # precision = calculate_metric(metrics[QualityDimension.PRECISION.name], traces_stable_period, net, im, fm)
+            precision = calculate_metric_FP(metrics[QualityDimension.PRECISION.name], traces_stable_period, tree) * 100
+            fitness = calculate_metric(metrics[QualityDimension.FITNESS.name], current_trace, net, im, fm) * 100
+        elif i >= initial_trace + winsize:
+            print(f'Detection phase - reading trace {i}')
+            window = EventLog(eventlog[i-winsize+1:i+1])
+            # after the stable period calculate the metrics after reading a new trace
+            # precision = calculate_metric(metrics[QualityDimension.PRECISION.name], window, net, im, fm)
+            precision = calculate_metric_FP(metrics[QualityDimension.PRECISION.name], window, tree) * 100
+            fitness = calculate_metric(metrics[QualityDimension.FITNESS.name], current_trace, net, im, fm) * 100
+
+        values[QualityDimension.PRECISION.name].append(precision)
+        adwin[QualityDimension.PRECISION.name].add_element(precision)
+
+        values[QualityDimension.FITNESS.name].append(fitness)
+        adwin[QualityDimension.FITNESS.name].add_element(fitness)
+
+        drift_detected = False
+        change_point = 0
+        # check for drift in precision
+        if adwin[QualityDimension.PRECISION.name].detected_change():
+            # define the change point as the initial of the window
+            change_point = i - winsize + 1
+            drifts[QualityDimension.PRECISION.name].append(change_point)
+            print(f'Metric [{QualityDimension.PRECISION.value}] detected a drift in trace: {change_point}')
+            drift_detected = True
+        # check for drift in fitness
+        elif adwin[QualityDimension.FITNESS.name].detected_change():
+            change_point = i
+            drifts[QualityDimension.FITNESS.name].append(change_point)
+            print(f'Metric [{QualityDimension.FITNESS.value}] detected a drift in trace: {change_point}')
+            drift_detected = True
+
+        if drift_detected:
+            for m in metrics:
+                # reset the detectors to avoid a new drift during the stable period
+                adwin[m].reset()
+            initial_trace = i+1
+            # Discover a new model using window
+            model_number += 1
+            log_for_model = EventLog(eventlog[change_point:change_point+winsize])
+            net, im, fm = inductive_miner.apply(log_for_model)
+            tree = inductive_miner.apply_tree(log_for_model)
+            print(f'New model discovered using traces [{change_point}-{change_point+winsize-1}]')
+            # gviz_pn = pn_visualizer.apply(net, im, fm)
+            # pn_visualizer.save(gviz_pn, os.path.join(models_output_path,
+            #                                          f'{logname}_PN_{model_number}_[{initial_trace}-{initial_trace + stable_period - 1}].png'))
+
+    print(f'Total of values for PRECISION: {len(values[QualityDimension.PRECISION.name])}')
+    print(f'Total of values for FITNESS: {len(values[QualityDimension.FITNESS.name])}')
+
+    all_drifts = []
+    for m in metrics.keys():
+        all_drifts += drifts[m]
+        df = pd.DataFrame(values[m])
+        df.to_excel(os.path.join(output_folder, f'{logname}_{m}_win{winsize}.xlsx'))
+    all_drifts = list(set(all_drifts))
+    all_drifts.sort()
+    filename = f'{logname}_win{winsize}'
+    if delta:
+        filename = f'{filename}_delta{delta}'
+
+    filename_fitness = f'{filename}_FITNESS'
+    metrics = {
+        QualityDimension.FITNESS.name: 'fitnessTBR',
+    }
+    save_plot(metrics, values, output_folder, filename_fitness, drifts[QualityDimension.FITNESS.name])
+
+    filename_precision = f'{filename}_PRECISION'
+    metrics = {
+        QualityDimension.PRECISION.name: 'precisionFP'
+    }
+    save_plot(metrics, values, output_folder, filename_precision, drifts[QualityDimension.PRECISION.name])
+    return all_drifts
