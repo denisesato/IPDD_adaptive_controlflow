@@ -849,19 +849,19 @@ def apply_detector_on_quality_metrics_fixed_window_TESTE(folder, logname, output
     log_for_model = EventLog(eventlog[initial_trace:winsize])
     net, im, fm = inductive_miner.apply(log_for_model)
     tree = inductive_miner.apply_tree(log_for_model)
-    print(f'Initial model discovered using traces [{initial_trace}-{winsize - 1}]')
+    print(f'Initial model discovered using traces [{initial_trace}-{winsize-1}]')
     model_number = 1
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
-    # gviz_pn = pn_visualizer.apply(net, im, fm)
-    # models_folder = f'models_win{winsize}_factor{factor}'
-    # if delta:
-    #     models_folder = f'{models_folder}_delta{delta}'
-    # models_output_path = os.path.join(output_folder, models_folder)
-    # if not os.path.exists(models_output_path):
-    #     os.makedirs(models_output_path)
-    # pn_visualizer.save(gviz_pn, os.path.join(models_output_path,
-    #                                          f'{logname}_PN_{model_number}_[{initial_trace}-{winsize - 1}].png'))
+    gviz_pn = pn_visualizer.apply(net, im, fm)
+    models_folder = f'models_win{winsize}_factor{factor}'
+    if delta:
+        models_folder = f'{models_folder}_delta{delta}'
+    models_output_path = os.path.join(output_folder, models_folder)
+    if not os.path.exists(models_output_path):
+        os.makedirs(models_output_path)
+    pn_visualizer.save(gviz_pn, os.path.join(models_output_path,
+                                             f'{logname}_PN_{model_number}_[{initial_trace}-{winsize-1}].png'))
 
     metrics = {
         QualityDimension.FITNESS.name: 'fitnessTBR',
@@ -933,9 +933,9 @@ def apply_detector_on_quality_metrics_fixed_window_TESTE(folder, logname, output
             net, im, fm = inductive_miner.apply(log_for_model)
             tree = inductive_miner.apply_tree(log_for_model)
             print(f'New model discovered using traces [{change_point}-{change_point+winsize-1}]')
-            # gviz_pn = pn_visualizer.apply(net, im, fm)
-            # pn_visualizer.save(gviz_pn, os.path.join(models_output_path,
-            #                                          f'{logname}_PN_{model_number}_[{initial_trace}-{initial_trace + stable_period - 1}].png'))
+            gviz_pn = pn_visualizer.apply(net, im, fm)
+            pn_visualizer.save(gviz_pn, os.path.join(models_output_path,
+                                                     f'{logname}_PN_{model_number}_[{change_point}-{change_point+winsize-1}].png'))
 
     print(f'Total of values for PRECISION: {len(values[QualityDimension.PRECISION.name])}')
     print(f'Total of values for FITNESS: {len(values[QualityDimension.FITNESS.name])}')
