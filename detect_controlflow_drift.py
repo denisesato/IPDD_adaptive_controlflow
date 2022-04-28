@@ -835,7 +835,7 @@ def apply_detector_on_quality_metrics_fixed_window(folder, logname, output_folde
 
 
 # Nova tentativa, agora calculando o FITNESS com o último trace
-# e a PRECISION os últimos traces desde o último setup só que com Footprints
+# e a PRECISION os últimos traces (janela) utilizando Footprints
 def apply_detector_on_quality_metrics_fixed_window_TESTE(folder, logname, output_folder, winsize, delta=None, factor=1):
     # import the event log sorted by timestamp
     variant = xes_importer.Variants.ITERPARSE

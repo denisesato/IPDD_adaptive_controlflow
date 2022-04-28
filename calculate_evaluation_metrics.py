@@ -31,7 +31,8 @@ def calculate_mean_delay(total_distance, tp):
 # The mean delay is the average of the delta between the trace where the drift was detected and the actual drift
 # The delays is the difference between the actual drift and the moment where it is detected
 # If the moment of detection occurs after the change point it should be informed in the parameter detected_at_list
-def calculate_metrics(metrics, detected_drifts, actual_drifts_informed, total_of_instances, et, detected_at_list=None):
+def calculate_metrics(metrics, detected_drifts, actual_drifts_informed, total_of_instances, et,
+                      detected_at_list=None):
     real_drifts = actual_drifts_informed.copy()
     # sort the both lists (real and detected drifts)
     real_drifts.sort()
@@ -77,8 +78,63 @@ def calculate_metrics(metrics, detected_drifts, actual_drifts_informed, total_of
     return metrics_result
 
 
-def calculate_metrics_dataset1(filepath, filename, metrics, logsizes, actual_change_points, number_of_instances,
-                               error_tolerance, save_input_for_calculation=False):
+# Calculate the F-score without the error tolerance
+# a TP is set when there is a drift detected after a real change point - the distance is reported in the mean delay
+# if there is more than one real change point consider the TP the closest one
+def calculate_metrics_new(metrics, detected_drifts, actual_drifts_informed, total_of_instances, detected_at_list=None):
+    real_drifts = actual_drifts_informed.copy()
+    # sort the both lists (real and detected drifts)
+    real_drifts.sort()
+    detected_drifts.sort()
+    if detected_at_list:
+        detected_at_list.sort()
+
+    # create lists to store the tp's and fp's
+    tp_list = []
+    fp_list = []
+    fn_list = []
+    total_distance = 0
+    for i, detected_cp in enumerate(detected_drifts):
+        possible_real_drifts = [cp for cp in real_drifts if detected_cp >= cp]
+        possible_real_drifts.sort(reverse=True)
+        if len(possible_real_drifts) > 0:
+            detected_real_cp = possible_real_drifts[0]
+            if detected_at_list:
+                dist_detection = detected_at_list[i] - detected_real_cp
+            else:
+                dist_detection = detected_cp - detected_real_cp
+            total_distance += dist_detection
+            tp_list.append(detected_cp)
+            real_drifts.remove(detected_real_cp)
+            possible_real_drifts.remove(detected_real_cp)
+            # if other possible real drifts are not detected they are FALSE NEGATIVES
+            for rp in possible_real_drifts:
+                fn_list.append(rp)
+                real_drifts.remove(rp)
+        else:
+            fp_list.append(detected_cp)
+
+    # the remaining real drifts are also FALSE NEGATIVES
+    for d in real_drifts:
+        fn_list.append(d)
+
+    tp = len(tp_list)
+    fp = len(fp_list)
+    fn = len(fn_list)
+    tn = total_of_instances - tp - fp - fn
+    metrics_result = {}
+    for m in metrics:
+        if m == 'f_score':
+            metrics_result[m] = calculate_f_score(tp, fp, fn)
+        if m == 'FPR':
+            metrics_result[m] = calculate_fpr(tn, fp)
+        if m == 'mean_delay':
+            metrics_result[m] = calculate_mean_delay(total_distance, tp)
+    return metrics_result
+
+
+def calculate_metrics_dataset1(filepath, filename, metrics, logsizes, actual_change_points,
+                               exceptions, number_of_instances, save_input_for_calculation=False):
     input_filename = os.path.join(filepath, filename)
     print(f'*****************************************************************')
     print(f'Calculating metrics for file {input_filename}...')
@@ -107,20 +163,29 @@ def calculate_metrics_dataset1(filepath, filename, metrics, logsizes, actual_cha
                 detected_at[configuration] = trace_ids_list
 
         for configuration in change_points.keys():
+            # get the actual change points
+            # check first in the exceptions
+            if logname in exceptions.keys():
+                real_change_points = exceptions[logname]['actual_change_points']
+                instances = exceptions[logname]['number_of_instances']
+            else:
+                # if it is not an exception, get the real change points by the logsize
+                real_change_points = actual_change_points[logsize]
+                instances = number_of_instances[logsize]
+
             # get the detected at information if available and convert to a list of integers
             if len(detected_at) > 0:
-                metrics = calculate_metrics(metrics, change_points[configuration], actual_change_points[logsize],
-                                            number_of_instances[logsize], error_tolerance[logsize],
-                                            detected_at[configuration])
+                metrics = calculate_metrics_new(metrics, change_points[configuration], real_change_points,
+                                                instances, detected_at[configuration])
             else:
-                metrics = calculate_metrics(metrics, change_points[configuration], actual_change_points[logsize],
-                                            number_of_instances[logsize], error_tolerance[logsize])
+                metrics = calculate_metrics_new(metrics, change_points[configuration], real_change_points,
+                                                instances)
             # add the calculated metrics to the dictionary
             if save_input_for_calculation:
                 metrics_results[logname][f'Detected drifts {configuration}'] = change_points[configuration]
                 if len(detected_at) > 0:
                     metrics_results[logname][f'Detected at {configuration}'] = detected_at[configuration]
-                metrics_results[logname][f'Real drifts {configuration}'] = actual_change_points[logsize]
+                metrics_results[logname][f'Real drifts {configuration}'] = real_change_points
             # print(f'-----------------------------------------------------------------')
             # print(f'Scenario: {key} - {scenario} - {delta}')
             # print(f'Real change points = {actual_change_points[scenario]}')
