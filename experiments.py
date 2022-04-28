@@ -693,6 +693,5 @@ if __name__ == '__main__':
 
     # EXPERIMENTS USING DATASET 1
     # dataset1_quality_strategie_trace_by_trace()
-    dataset1_quality_strategie_fixed_window()
-    # dataset1_similarity_strategie_fixed_window()
-    # dataset1_similarity_strategie_fixed_window_NOVO()
+    # dataset1_quality_strategie_fixed_window()
+    dataset1_similarity_strategie_fixed_window_NOVO()
