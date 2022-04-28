@@ -5,7 +5,8 @@ from calculate_evaluation_metrics import change_points_key
 from detect_controlflow_drift import apply_detector_on_quality_metrics_trace_by_trace, QualityDimension, \
     apply_detector_on_model_similarity_fixed_window, \
     SimilarityMetric, apply_detector_on_quality_metrics_fixed_window, apply_detector_on_model_similarity_trace_by_trace, \
-    apply_detector_on_model_similarity_fixed_window_NOVO, apply_detector_on_quality_metrics_fixed_window_TESTE
+    apply_detector_on_model_similarity_fixed_window_NOVO, apply_detector_on_quality_metrics_fixed_window_TESTE, \
+    apply_detector_on_quality_metrics_fixed_window_JANELA_A_FRENTE
 
 
 def dataset1_similarity_strategie_trace_by_trace():
@@ -108,7 +109,6 @@ def dataset1_similarity_strategie_trace_by_trace():
     # lognames = ['ROI2.5k.xes']
     # windows = [100]
     # deltas = [0.002]
-
 
     output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity_fixed_trace_by_trace/dataset1'
     if not os.path.exists(output_folder):
@@ -467,9 +467,10 @@ def dataset1_quality_strategie_trace_by_trace():
         drifts[log] = {}
         for sp in stable_periods:
             for d in deltas:
-                drifts[log][f'{change_points_key}d={d} sp={sp}'] = apply_detector_on_quality_metrics_trace_by_trace(input_folder, log,
-                                                                                                 metrics, d, sp,
-                                                                                                 output_folder)
+                drifts[log][f'{change_points_key}d={d} sp={sp}'] = apply_detector_on_quality_metrics_trace_by_trace(
+                    input_folder, log,
+                    metrics, d, sp,
+                    output_folder)
 
     df1 = pd.DataFrame.from_dict(drifts, orient='index')
     df1.to_excel(os.path.join(output_folder, 'experiments_quality_trace_by_trace_dataset1.xlsx'))
@@ -688,11 +689,22 @@ def dataset3_similarity_strategie_fixed_window():
     df1.to_excel(os.path.join(output_folder, 'experiments_model_similarity_fixed_window_dataset3.xlsx'))
 
 
+def precision_scenario():
+    input_folder = 'data/input/logs/controlflow/samples'
+    logname = 'log_2drifts_intervalo10.xes'
+    output_folder = 'data/output/windowing/samples'
+    # apply_detector_on_quality_metrics_fixed_window_JANELA_A_FRENTE(input_folder, logname, output_folder, 8, 0.1, 100)
+    apply_detector_on_quality_metrics_fixed_window_TESTE(input_folder, logname, output_folder, 7, 1, 100)
+
+
 if __name__ == '__main__':
     # dataset3_similarity_strategie_fixed_window()
 
     # EXPERIMENTS USING DATASET 1
     # dataset1_quality_strategie_trace_by_trace()
-    dataset1_quality_strategie_fixed_window()
+    # dataset1_quality_strategie_fixed_window()
     # dataset1_similarity_strategie_fixed_window()
     # dataset1_similarity_strategie_fixed_window_NOVO()
+
+    # SAMPLE EXPERIMENTS
+    precision_scenario()
