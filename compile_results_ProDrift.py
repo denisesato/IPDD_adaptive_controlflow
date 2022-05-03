@@ -60,7 +60,7 @@ def compile_results_from_prodrift(filepath, filenames):
             return
 
         detected_drifts, detected_at = read_drifts_prodrift(complete_filename)
-        logname = pattern + logsize
+        logname = pattern + logsize + '.xes'
         configuration_drifts = change_points_key + approach + ' ' + winsize
         configuration_delays = detected_at_key + approach + ' ' + winsize
         if logname not in results.keys():
@@ -78,7 +78,7 @@ def compile_results_from_prodrift(filepath, filenames):
 
 
 if __name__ == '__main__':
-    results_filepath = 'C://Users//denisesato//OneDrive//Documents//Doutorado//Tese//experiments//Apromore//dataset1'
+    results_filepath = 'C://Users//denisesato//Experimentos_Tese//Apromore//dataset1'
     file_type = '.txt'
     key = 'log_'
     filenames = get_Apromore_files(results_filepath, key, file_type)

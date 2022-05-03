@@ -67,25 +67,36 @@ def dataset1():
     metrics = [
         'f_score',
         'mean_delay',
+        'mean_detection_delay',
         'FPR'
     ]
 
-    # ipdd_quality_trace_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace//dataset1'
-    # ipdd_quality_trace_filename = 'experiments_quality_trace_by_trace_dataset1.xlsx'
-    # calculate_metrics_dataset1(ipdd_quality_trace_path, ipdd_quality_trace_filename, metrics, scenarios,
-    #                            actual_change_points, number_of_instances,
-    #                            error_tolerance, save_input_for_calculation=True)
+    ipdd_quality_trace_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
+                              '//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace//dataset1'
+    ipdd_quality_trace_filename = 'experiments_quality_trace_by_trace_dataset1.xlsx'
 
-    ipdd_quality_windowing_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output//controlflow_adaptive//detection_on_quality_metrics_fixed_window_w100_d0.1_COMPLETO//dataset1'
-    ipdd_quality_windowing_filename = 'experiments_quality_fixed_window_dataset1_w100.xlsx'
+    calculate_metrics_dataset1(ipdd_quality_trace_path, ipdd_quality_trace_filename, metrics, scenarios,
+                               actual_change_points, exceptions_in_actual_change_points, number_of_instances,
+                               save_input_for_calculation=True)
+
+    ipdd_quality_windowing_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
+                                  '//controlflow_adaptive//detection_on_quality_metrics_fixed_window//dataset1'
+    ipdd_quality_windowing_filename = 'experiments_quality_fixed_window_dataset1.xlsx'
     calculate_metrics_dataset1(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, metrics, scenarios,
                                actual_change_points, exceptions_in_actual_change_points, number_of_instances,
                                save_input_for_calculation=True)
 
-    # prodrift_filepath = 'C://Users//denisesato//OneDrive//Documents//Doutorado//Tese//experiments//Apromore//dataset1'
-    # prodrift_filename = 'results_prodrift.xlsx'
-    # calculate_metrics_dataset1(prodrift_filepath, prodrift_filename, metrics, scenarios, actual_change_points,
-    #                            number_of_instances, error_tolerance, save_input_for_calculation=True)
+    ipdd_model_similarity_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
+                                 '//controlflow_adaptive//detection_on_quality_metrics_fixed_window//dataset1'
+    ipdd_model_similarity_filename = 'experiments_quality_fixed_window_dataset1.xlsx'
+    calculate_metrics_dataset1(ipdd_model_similarity_path, ipdd_model_similarity_filename, metrics, scenarios,
+                               actual_change_points, exceptions_in_actual_change_points, number_of_instances,
+                               save_input_for_calculation=True)
+
+    prodrift_filepath = 'C://Users//denisesato//Experimentos_Tese//Apromore//dataset1'
+    prodrift_filename = 'results_prodrift.xlsx'
+    calculate_metrics_dataset1(prodrift_filepath, prodrift_filename, metrics, scenarios, actual_change_points,
+                               exceptions_in_actual_change_points, number_of_instances, save_input_for_calculation=True)
 
 
 if __name__ == '__main__':

@@ -94,16 +94,25 @@ def calculate_metrics_new(metrics, detected_drifts, actual_drifts_informed, tota
     fp_list = []
     fn_list = []
     total_distance = 0
+    total_detection_distance = 0
     for i, detected_cp in enumerate(detected_drifts):
         possible_real_drifts = [cp for cp in real_drifts if detected_cp >= cp]
         possible_real_drifts.sort(reverse=True)
         if len(possible_real_drifts) > 0:
             detected_real_cp = possible_real_drifts[0]
+
+            # if there is information about the trace of detection apply it for
+            # calculating the mean detection delay
             if detected_at_list:
-                dist_detection = detected_at_list[i] - detected_real_cp
+                detection_delay = detected_at_list[i] - detected_real_cp
             else:
-                dist_detection = detected_cp - detected_real_cp
-            total_distance += dist_detection
+                detection_delay = detected_cp - detected_real_cp
+            total_detection_distance += detection_delay
+
+            # the mean delay considers the distance between the real change point and the reported change point
+            delay = detected_cp - detected_real_cp
+            total_distance += delay
+
             tp_list.append(detected_cp)
             real_drifts.remove(detected_real_cp)
             possible_real_drifts.remove(detected_real_cp)
@@ -130,6 +139,8 @@ def calculate_metrics_new(metrics, detected_drifts, actual_drifts_informed, tota
             metrics_result[m] = calculate_fpr(tn, fp)
         if m == 'mean_delay':
             metrics_result[m] = calculate_mean_delay(total_distance, tp)
+        if m == 'mean_detection_delay':
+            metrics_result[m] = calculate_mean_delay(total_detection_distance, tp)
     return metrics_result
 
 
