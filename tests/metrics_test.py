@@ -1,6 +1,6 @@
 import unittest
 
-from calculate_evaluation_metrics import calculate_metrics_new
+from evaluation_metrics import calculate_metrics_new
 
 
 class TestMetrics(unittest.TestCase):

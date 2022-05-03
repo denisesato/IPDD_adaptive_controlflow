@@ -2,7 +2,7 @@ import os
 import re
 import pandas as pd
 
-from calculate_evaluation_metrics import change_points_key, detected_at_key
+from evaluation_metrics import change_points_key, detected_at_key
 
 
 def get_Apromore_files(log_file_path, key, ftype):

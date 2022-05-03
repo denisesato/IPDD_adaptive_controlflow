@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 
-from calculate_evaluation_metrics import change_points_key
+from evaluation_metrics import change_points_key
 from detect_controlflow_drift import apply_detector_on_quality_metrics_trace_by_trace, QualityDimension, \
     apply_detector_on_model_similarity_fixed_window, \
     SimilarityMetric, apply_detector_on_quality_metrics_fixed_window, apply_detector_on_model_similarity_trace_by_trace, \

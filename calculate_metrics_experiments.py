@@ -1,4 +1,12 @@
-from calculate_evaluation_metrics import calculate_metrics_dataset1
+from evaluation_metrics import calculate_metrics_dataset1
+
+# defined metrics
+metrics = [
+        'f_score',
+        'mean_delay',
+        'mean_detection_delay',
+        'FPR'
+    ]
 
 
 def define_change_points_dataset1(inter_drift_distance):
@@ -63,13 +71,6 @@ def dataset1():
         '7.5k': 7500,
         '10k': 10000
     }
-
-    metrics = [
-        'f_score',
-        'mean_delay',
-        'mean_detection_delay',
-        'FPR'
-    ]
 
     ipdd_quality_trace_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
                               '//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace//dataset1'
