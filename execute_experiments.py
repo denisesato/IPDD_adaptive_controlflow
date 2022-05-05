@@ -98,9 +98,9 @@ class Dataset1Configuration:
     deltas = [0.002, 0.05, 0.1, 0.3]
 
     # for testing one specific scenario
-    lognames = ['cb2.5k.xes']
-    winsizes = [100]
-    deltas = [0.002]
+    # lognames = ['cb2.5k.xes']
+    # winsizes = [100]
+    # deltas = [0.002]
 
 
 def dataset1_similarity_strategie_fixed_window():

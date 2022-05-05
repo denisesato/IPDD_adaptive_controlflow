@@ -73,8 +73,8 @@ number_of_instances_ds1 = {
 
 
 def dataset1():
-    ipdd_quality_trace_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
-                              '//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace//dataset1'
+    ipdd_quality_trace_path = 'data//output//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace' \
+                              '//dataset1'
     ipdd_quality_trace_filename = 'experiments_quality_trace_by_trace_dataset1.xlsx'
 
     calculate_metrics_dataset1(ipdd_quality_trace_path, ipdd_quality_trace_filename, metrics, scenarios_ds1,
@@ -82,17 +82,17 @@ def dataset1():
                                number_of_instances_ds1,
                                save_input_for_calculation=True)
 
-    ipdd_quality_windowing_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
-                                  '//controlflow_adaptive//detection_on_quality_metrics_fixed_window//dataset1'
+    ipdd_quality_windowing_path = 'data//output//controlflow_adaptive//detection_on_quality_metrics_fixed_window' \
+                                  '//dataset1'
     ipdd_quality_windowing_filename = 'experiments_quality_fixed_window_dataset1.xlsx'
     calculate_metrics_dataset1(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, metrics, scenarios_ds1,
                                actual_change_points_ds1, exceptions_in_actual_change_points_ds1,
                                number_of_instances_ds1,
                                save_input_for_calculation=True)
 
-    ipdd_model_similarity_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
-                                 '//controlflow_adaptive//detection_on_quality_metrics_fixed_window//dataset1'
-    ipdd_model_similarity_filename = 'experiments_quality_fixed_window_dataset1.xlsx'
+    ipdd_model_similarity_path = 'data//output//controlflow_adaptive//detection_on_model_similarity_fixed_window' \
+                                 '//dataset1'
+    ipdd_model_similarity_filename = 'experiments_model_similarity_fixed_window_dataset1.xlsx'
     calculate_metrics_dataset1(ipdd_model_similarity_path, ipdd_model_similarity_filename, metrics, scenarios_ds1,
                                actual_change_points_ds1, exceptions_in_actual_change_points_ds1,
                                number_of_instances_ds1,
