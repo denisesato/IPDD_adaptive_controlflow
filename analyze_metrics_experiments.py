@@ -32,12 +32,13 @@ def plot_window_size(df, selected_column, title, delta=None):
     plt.clf()
     df_plot.plot(kind='line')
     plt.xlabel('Window size')
-    plt.ylabel('F-score')
+    plt.ylabel(selected_column)
     if delta:
         plt.title(f'{title}\nImpact of the window size on the {selected_column} delta={delta}')
     else:
         plt.title(f'{title}\nImpact of the window size on the {selected_column}')
-    plt.ylim(0.0, 1.0)
+    if 'f_score' in selected_column:
+        plt.ylim(0.0, 1.0)
     plt.grid(True)
     # get handles and labels
     handles, labels = plt.gca().get_legend_handles_labels()
@@ -73,29 +74,39 @@ def analyze_metrics_apromore(input_path, filename, dataset_config, selected_colu
 
 def dataset1():
     config = Dataset1Configuration()
-    f_score_column_name_ipdd = 'f_score'
+    f_score_column_ipdd = 'f_score'
+    mean_delay_column_ipdd = 'mean_delay'
+
     ipdd_quality_trace_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
                               '//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace//dataset1'
     ipdd_quality_trace_filename = 'metrics_experiments_quality_trace_by_trace_dataset1.xlsx'
-    analyze_metrics_ipdd(ipdd_quality_trace_path, ipdd_quality_trace_filename, config, f_score_column_name_ipdd,
+    analyze_metrics_ipdd(ipdd_quality_trace_path, ipdd_quality_trace_filename, config, f_score_column_ipdd,
+                         'Quality Metrics - Trace Approach')
+    analyze_metrics_ipdd(ipdd_quality_trace_path, ipdd_quality_trace_filename, config, mean_delay_column_ipdd,
                          'Quality Metrics - Trace Approach')
 
     ipdd_quality_windowing_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
                                   '//controlflow_adaptive//detection_on_quality_metrics_fixed_window//dataset1'
     ipdd_quality_windowing_filename = 'metrics_experiments_quality_fixed_window_dataset1.xlsx'
-    analyze_metrics_ipdd(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, config, f_score_column_name_ipdd,
+    analyze_metrics_ipdd(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, config, f_score_column_ipdd,
                     'Quality Metrics - Window Approach')
+    analyze_metrics_ipdd(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, config, mean_delay_column_ipdd,
+                         'Quality Metrics - Window Approach')
 
     ipdd_model_similarity_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
                                  '//controlflow_adaptive//detection_on_model_similarity_fixed_window//dataset1'
     ipdd_model_similarity_filename = 'metrics_experiments_model_similarity_fixed_window_dataset1.xlsx'
-    analyze_metrics_ipdd(ipdd_model_similarity_path, ipdd_model_similarity_filename, config, f_score_column_name_ipdd,
+    analyze_metrics_ipdd(ipdd_model_similarity_path, ipdd_model_similarity_filename, config, f_score_column_ipdd,
+                         'Model Similarity')
+    analyze_metrics_ipdd(ipdd_model_similarity_path, ipdd_model_similarity_filename, config, mean_delay_column_ipdd,
                          'Model Similarity')
 
     apromore_path = 'C://Users//denisesato//Experimentos_Tese//Apromore//dataset1'
     apromore_filename = 'metrics_results_prodrift.xlsx'
     analyze_metrics_apromore(apromore_path, apromore_filename, config, 'f_score awin', 'AWIN')
+    analyze_metrics_apromore(apromore_path, apromore_filename, config, 'mean_delay awin', 'AWIN')
     analyze_metrics_apromore(apromore_path, apromore_filename, config, 'f_score fwin', 'FWIN')
+    analyze_metrics_apromore(apromore_path, apromore_filename, config, 'mean_delay fwin', 'FWIN')
 
 
 if __name__ == '__main__':
