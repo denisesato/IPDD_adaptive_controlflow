@@ -61,7 +61,7 @@ def analyze_metrics_ipdd(input_path, filename, dataset_config, selected_column, 
         plot_window_size(df, selected_column, title, d)
 
 
-def analyze_metrics_apromore(input_path, filename, dataset_config, selected_column, title):
+def analyze_metrics(input_path, filename, selected_column, title):
     complete_filename = os.path.join(input_path, filename)
     df = pd.read_excel(complete_filename, index_col=0)
     df.index.name = 'logname'
@@ -103,10 +103,17 @@ def dataset1():
 
     apromore_path = 'C://Users//denisesato//Experimentos_Tese//Apromore//dataset1'
     apromore_filename = 'metrics_results_prodrift.xlsx'
-    analyze_metrics_apromore(apromore_path, apromore_filename, config, 'f_score awin', 'AWIN')
-    analyze_metrics_apromore(apromore_path, apromore_filename, config, 'mean_delay awin', 'AWIN')
-    analyze_metrics_apromore(apromore_path, apromore_filename, config, 'f_score fwin', 'FWIN')
-    analyze_metrics_apromore(apromore_path, apromore_filename, config, 'mean_delay fwin', 'FWIN')
+    analyze_metrics(apromore_path, apromore_filename, 'f_score awin', 'AWIN')
+    analyze_metrics(apromore_path, apromore_filename, 'mean_delay awin', 'AWIN')
+    analyze_metrics(apromore_path, apromore_filename, 'f_score fwin', 'FWIN')
+    analyze_metrics(apromore_path, apromore_filename, 'mean_delay fwin', 'FWIN')
+
+    vdd_path = 'C://Users//denisesato//Experimentos_Tese//VDD//dataset1//output_console'
+    vdd_filename = 'metrics_results_vdd.xlsx'
+    analyze_metrics(vdd_path, vdd_filename, 'f_score all', 'ALL')
+    analyze_metrics(vdd_path, vdd_filename, 'mean_delay all', 'ALL')
+    analyze_metrics(vdd_path, vdd_filename, 'f_score cluster', 'CLUSTER')
+    analyze_metrics(vdd_path, vdd_filename, 'mean_delay all', 'CLUSTER')
 
 
 if __name__ == '__main__':

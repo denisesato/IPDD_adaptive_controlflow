@@ -104,6 +104,12 @@ def dataset1():
                                exceptions_in_actual_change_points_ds1, number_of_instances_ds1,
                                save_input_for_calculation=True)
 
+    vdd_filepath = 'C://Users//denisesato//Experimentos_Tese//VDD//dataset1//output_console'
+    vdd_filename = 'results_VDD.xlsx'
+    calculate_metrics_dataset1(vdd_filepath, vdd_filename, metrics, scenarios_ds1, actual_change_points_ds1,
+                               exceptions_in_actual_change_points_ds1, number_of_instances_ds1,
+                               save_input_for_calculation=True)
+
 
 if __name__ == '__main__':
     dataset1()
