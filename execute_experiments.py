@@ -94,7 +94,8 @@ class Dataset1Configuration:
     ]
 
     lognames = lognames2500 + lognames5000 + lognames7500 + lognames10000
-    winsizes = [i for i in range(100, 1001, 100)]
+    # winsizes = [i for i in range(100, 1001, 100)]
+    winsizes = [i for i in range(25, 301, 25)]
     deltas = [0.002, 0.05, 0.1, 0.3]
 
     # for testing one specific scenario
