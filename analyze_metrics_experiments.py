@@ -79,7 +79,7 @@ def dataset1():
 
     ipdd_quality_trace_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
                               '//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace//dataset1'
-    ipdd_quality_trace_filename = 'metrics_experiments_quality_trace_by_trace_dataset1.xlsx'
+    ipdd_quality_trace_filename = 'metrics_experiments_quality_metrics_trace_by_trace_dataset1.xlsx'
     analyze_metrics_ipdd(ipdd_quality_trace_path, ipdd_quality_trace_filename, config, f_score_column_ipdd,
                          'Quality Metrics - Trace Approach')
     analyze_metrics_ipdd(ipdd_quality_trace_path, ipdd_quality_trace_filename, config, mean_delay_column_ipdd,
@@ -87,7 +87,7 @@ def dataset1():
 
     ipdd_quality_windowing_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
                                   '//controlflow_adaptive//detection_on_quality_metrics_fixed_window//dataset1'
-    ipdd_quality_windowing_filename = 'metrics_experiments_quality_fixed_window_dataset1.xlsx'
+    ipdd_quality_windowing_filename = 'metrics_experiments_quality_metrics_fixed_window_dataset1.xlsx'
     analyze_metrics_ipdd(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, config, f_score_column_ipdd,
                     'Quality Metrics - Window Approach')
     analyze_metrics_ipdd(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, config, mean_delay_column_ipdd,
@@ -101,19 +101,19 @@ def dataset1():
     analyze_metrics_ipdd(ipdd_model_similarity_path, ipdd_model_similarity_filename, config, mean_delay_column_ipdd,
                          'Model Similarity')
 
-    apromore_path = 'C://Users//denisesato//Experimentos_Tese//Apromore//dataset1'
+    apromore_path = 'C://Users//denisesato//Experimentos_Tese//Apromore//experimento2//dataset1'
     apromore_filename = 'metrics_results_prodrift.xlsx'
     analyze_metrics(apromore_path, apromore_filename, 'f_score awin', 'AWIN')
     analyze_metrics(apromore_path, apromore_filename, 'mean_delay awin', 'AWIN')
     analyze_metrics(apromore_path, apromore_filename, 'f_score fwin', 'FWIN')
     analyze_metrics(apromore_path, apromore_filename, 'mean_delay fwin', 'FWIN')
 
-    vdd_path = 'C://Users//denisesato//Experimentos_Tese//VDD//dataset1//output_console'
-    vdd_filename = 'metrics_results_vdd.xlsx'
-    analyze_metrics(vdd_path, vdd_filename, 'f_score all', 'ALL')
-    analyze_metrics(vdd_path, vdd_filename, 'mean_delay all', 'ALL')
-    analyze_metrics(vdd_path, vdd_filename, 'f_score cluster', 'CLUSTER')
-    analyze_metrics(vdd_path, vdd_filename, 'mean_delay all', 'CLUSTER')
+    # vdd_path = 'C://Users//denisesato//Experimentos_Tese//VDD//dataset1//output_console'
+    # vdd_filename = 'metrics_results_vdd.xlsx'
+    # analyze_metrics(vdd_path, vdd_filename, 'f_score all', 'ALL')
+    # analyze_metrics(vdd_path, vdd_filename, 'mean_delay all', 'ALL')
+    # analyze_metrics(vdd_path, vdd_filename, 'f_score cluster', 'CLUSTER')
+    # analyze_metrics(vdd_path, vdd_filename, 'mean_delay all', 'CLUSTER')
 
 
 if __name__ == '__main__':

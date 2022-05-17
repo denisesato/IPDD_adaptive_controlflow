@@ -56,9 +56,8 @@ def compile_results_from_prodrift(filepath, filenames):
             approach = match.group(3)
             winsize = match.group(4)
         else:
-            print(f'Filename {file} do not follow the expected patter {pattern} - EXITING...')
-            return
-
+            print(f'Filename {file} do not follow the expected patter {pattern} - ignoring...')
+            continue
         detected_drifts, detected_at = read_drifts_prodrift(complete_filename)
         logname = pattern + logsize + '.xes'
         configuration_drifts = change_points_key + approach + ' ' + winsize
@@ -78,7 +77,7 @@ def compile_results_from_prodrift(filepath, filenames):
 
 
 if __name__ == '__main__':
-    results_filepath = 'C://Users//denisesato//Experimentos_Tese//Apromore//dataset1'
+    results_filepath = 'C://Users//denisesato//Experimentos_Tese//Apromore//experimento2//dataset1//'
     file_type = '.txt'
     key = 'log_'
     filenames = get_Apromore_files(results_filepath, key, file_type)
