@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import re
 
 change_points_key = 'drifts - '
 detected_at_key = 'detected at - '
@@ -144,8 +145,7 @@ def calculate_metrics_new(metrics, detected_drifts, actual_drifts_informed, tota
     return metrics_result
 
 
-def calculate_metrics_dataset1(filepath, filename, metrics, logsizes, actual_change_points,
-                               exceptions, number_of_instances, save_input_for_calculation=False):
+def calculate_metrics_dataset(filepath, filename, metrics, dataset_config, save_input_for_calculation=False):
     input_filename = os.path.join(filepath, filename)
     print(f'*****************************************************************')
     print(f'Calculating metrics for file {input_filename}...')
@@ -154,9 +154,16 @@ def calculate_metrics_dataset1(filepath, filename, metrics, logsizes, actual_cha
     complete_results = df.T.to_dict()
     metrics_results = {}
     for logname in complete_results.keys():
+        if logname not in dataset_config.lognames:
+            print(f'Logname {logname} not configured for the dataset. IGNORING...')
+            continue
         metrics_results[logname] = {}
-        logsize = [i for i in logsizes
-                   if i in logname][0]
+        regexp = r'(\d.*).xes'
+        if match := re.search(regexp, logname):
+            logsize = match.group(1)
+        else:
+            print(f'Problem getting the logsize. File {input_filename} NOT PROCESSED!')
+            return
 
         change_points = {}
         detected_at = {}
@@ -176,13 +183,13 @@ def calculate_metrics_dataset1(filepath, filename, metrics, logsizes, actual_cha
         for configuration in change_points.keys():
             # get the actual change points
             # check first in the exceptions
-            if logname in exceptions.keys():
-                real_change_points = exceptions[logname]['actual_change_points']
-                instances = exceptions[logname]['number_of_instances']
+            if logname in dataset_config.exceptions_in_actual_change_points.keys():
+                real_change_points = dataset_config.exceptions_in_actual_change_points[logname]['actual_change_points']
+                instances = dataset_config.exceptions_in_actual_change_points[logname]['number_of_instances']
             else:
                 # if it is not an exception, get the real change points by the logsize
-                real_change_points = actual_change_points[logsize]
-                instances = number_of_instances[logsize]
+                real_change_points = dataset_config.actual_change_points[logsize]
+                instances = dataset_config.number_of_instances[logsize]
 
             # get the detected at information if available and convert to a list of integers
             if len(detected_at) > 0:

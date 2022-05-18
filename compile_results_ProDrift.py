@@ -1,7 +1,6 @@
 import os
 import re
 import pandas as pd
-
 from evaluation_metrics import change_points_key, detected_at_key
 
 
@@ -56,7 +55,7 @@ def compile_results_from_prodrift(filepath, filenames):
             approach = match.group(3)
             winsize = match.group(4)
         else:
-            print(f'Filename {file} do not follow the expected patter {pattern} - ignoring...')
+            print(f'Filename {file} do not follow the expected patter {pattern} - IGNORING...')
             continue
         detected_drifts, detected_at = read_drifts_prodrift(complete_filename)
         logname = pattern + logsize + '.xes'

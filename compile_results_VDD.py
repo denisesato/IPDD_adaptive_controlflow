@@ -3,7 +3,6 @@ import re
 import pandas as pd
 from evaluation_metrics import change_points_key, detected_at_key
 
-
 def get_VDD_files(log_file_path, key, ftype):
     # get the .txt files with the results reported by Apromore
     files = [i for i in os.listdir(log_file_path)
@@ -27,8 +26,6 @@ def read_drifts_VDD(file, winsize, winstep):
     file = open(file, 'r')
     lines = file.readlines()
 
-    reported_drifts = []
-    detected_at_list = []
     get_next_line = False
     line_with_windows = ''
     for line in lines:
@@ -61,8 +58,8 @@ def compile_results_from_VDD(filepath, filenames, key):
             winsize = match.group(3)
             approach = match.group(4)
         else:
-            print(f'Filename {file} do not follow the expected patter {pattern} - EXITING...')
-            return
+            print(f'Filename {file} do not follow the expected patter {pattern} - IGNORING...')
+            continue
 
         detected_drifts = read_drifts_VDD(complete_filename, int(winsize), int(winsize)/2)
         logname = pattern + logsize + '.xes'
