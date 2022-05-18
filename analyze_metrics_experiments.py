@@ -5,7 +5,7 @@ import re
 from execute_experiments import Dataset1Configuration
 
 
-def plot_window_size(df, selected_column, title, delta=None):
+def plot_window_size_grouping_by_logsize(df, selected_column, title, delta=None):
     ############################################################
     # Grouping by logsize
     ############################################################
@@ -16,8 +16,8 @@ def plot_window_size(df, selected_column, title, delta=None):
 
     # maintain only the last number in the column names (window)
     df_plot = df_filtered.rename(
-            columns={element: re.sub(r'(\D.*?)(\d+)(?!.*\d)', r'\2', element, count=1)
-                     for element in df_filtered.columns.tolist()})
+        columns={element: re.sub(r'(\D.*?)(\d+)(?!.*\d)', r'\2', element, count=1)
+                 for element in df_filtered.columns.tolist()})
 
     # sort columns
     ordered_columns = [int(w) for w in df_plot.columns]
@@ -26,8 +26,8 @@ def plot_window_size(df, selected_column, title, delta=None):
     df_plot = df_plot[ordered_columns]
 
     pattern = '[a-zA-Z]*(\d.*).xes$'
-    s = df_plot.index.str.extract(pattern, expand=False)
-    df_plot = df_plot.groupby(s).mean().T
+    size = df_plot.index.str.extract(pattern, expand=False)
+    df_plot = df_plot.groupby(size).mean().T
     plt.cla()
     plt.clf()
     df_plot.plot(kind='line')
@@ -49,6 +49,51 @@ def plot_window_size(df, selected_column, title, delta=None):
     plt.show()
 
 
+def plot_window_size_grouping_by_change_pattern(df, selected_column, title, window, delta=None):
+    ############################################################
+    # Grouping by logsize
+    ############################################################
+    df_filtered = df.filter(like=selected_column, axis=1)
+    df_filtered.index.name = 'change pattern'
+    if delta:
+        df_filtered = df_filtered.filter(like=f'd={delta}', axis=1)
+
+    # maintain only the last number in the column names (window)
+    df_plot = df_filtered.rename(
+        columns={element: re.sub(r'(\D.*?)(\d+)(?!.*\d)', r'\2', element, count=1)
+                 for element in df_filtered.columns.tolist()})
+
+    # filter only the results for the define window
+    df_plot = df_plot.filter(like=f'{window}', axis=1)
+
+    # sort columns
+    # ordered_columns = [int(w) for w in df_plot.columns]
+    # ordered_columns.sort()
+    # ordered_columns = [str(w) for w in ordered_columns]
+    # df_plot = df_plot[ordered_columns]
+
+    regexp = '([a-zA-Z]*)\d.*.xes$'
+    change_pattern = df_plot.index.str.extract(regexp, expand=False)
+    df_plot = df_plot.groupby(change_pattern).mean()
+    # sort columns
+    # df_plot.sort_index()
+    df_plot['labels'] = df_plot.index.str.lower()
+    df_plot = df_plot.sort_values('labels').drop('labels', axis=1)
+    plt.cla()
+    plt.clf()
+    df_plot.plot(kind='bar', legend=None)
+    plt.xlabel('Change pattern')
+    plt.ylabel(selected_column)
+    if delta:
+        plt.title(f'{title}\n{selected_column} by change pattern - window={window} delta={delta}')
+    else:
+        plt.title(f'{title}\n{selected_column} by change pattern - window={window}')
+    if 'f_score' in selected_column:
+        plt.ylim(0.0, 1.0)
+    plt.grid(True)
+    plt.show()
+
+
 def analyze_metrics_ipdd(input_path, filename, dataset_config, selected_column, title):
     complete_filename = os.path.join(input_path, filename)
     df = pd.read_excel(complete_filename, index_col=0)
@@ -58,7 +103,8 @@ def analyze_metrics_ipdd(input_path, filename, dataset_config, selected_column, 
     # Impact of the window size on the metrics
     ############################################################
     for d in dataset_config.deltas:
-        plot_window_size(df, selected_column, title, d)
+        # plot_window_size_grouping_by_logsize(df, selected_column, title, d)
+        plot_window_size_grouping_by_change_pattern(df, selected_column, title, 100, d)
 
 
 def analyze_metrics(input_path, filename, selected_column, title):
@@ -69,7 +115,8 @@ def analyze_metrics(input_path, filename, selected_column, title):
     ############################################################
     # Impact of the window size on the metrics
     ############################################################
-    plot_window_size(df, selected_column, title)
+    # plot_window_size_grouping_by_logsize(df, selected_column, title)
+    plot_window_size_grouping_by_change_pattern(df, selected_column, title, 100)
 
 
 def dataset1():
@@ -89,7 +136,7 @@ def dataset1():
                                   '//controlflow_adaptive//detection_on_quality_metrics_fixed_window//dataset1'
     ipdd_quality_windowing_filename = 'metrics_experiments_quality_metrics_fixed_window_dataset1.xlsx'
     analyze_metrics_ipdd(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, config, f_score_column_ipdd,
-                    'Quality Metrics - Window Approach')
+                         'Quality Metrics - Window Approach')
     analyze_metrics_ipdd(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, config, mean_delay_column_ipdd,
                          'Quality Metrics - Window Approach')
 
