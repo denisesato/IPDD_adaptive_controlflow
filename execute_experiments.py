@@ -322,7 +322,7 @@ def quality_strategie_fixed_window(dataset_config, output_folder):
     df1.to_excel(os.path.join(output_folder, 'experiments_quality_metrics_fixed_window.xlsx'))
 
 
-def dataset1_quality_strategie_adaptive_window(dataset_config, output_folder):
+def quality_strategie_adaptive_window(dataset_config, output_folder):
     drifts = dict.fromkeys(dataset_config.lognames)
     for log in dataset_config.lognames:
         drifts[log] = {}
@@ -349,17 +349,17 @@ if __name__ == '__main__':
     quality_strategie_fixed_window(dataset_config, output_folder)
     # output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity_fixed_window/dataset1'
     # model_similarity_strategie_fixed_window(dataset_config, output_folder)
-    output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_adaptive_window/dataset1'
-    dataset1_quality_strategie_adaptive_window(dataset_config, output_folder)
+    # output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_adaptive_window/dataset1'
+    # quality_strategie_adaptive_window(dataset_config, output_folder)
     #################################################################
     # EXPERIMENTS USING DATASET 2
     #################################################################
-    dataset_config = Dataset2Configuration()
-    output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_trace_by_trace/dataset2'
-    quality_strategie_trace_by_trace(dataset_config, output_folder)
-    output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_fixed_window/dataset2'
-    quality_strategie_fixed_window(dataset_config, output_folder)
+    # dataset_config = Dataset2Configuration()
+    # output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_trace_by_trace/dataset2'
+    # quality_strategie_trace_by_trace(dataset_config, output_folder)
+    # output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_fixed_window/dataset2'
+    # quality_strategie_fixed_window(dataset_config, output_folder)
     # output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity_fixed_window/dataset2'
     # model_similarity_strategie_fixed_window(dataset_config, output_folder)
-    output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_adaptive_window/dataset2'
-    dataset1_quality_strategie_adaptive_window(dataset_config, output_folder)
+    # output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_adaptive_window/dataset2'
+    # quality_strategie_adaptive_window(dataset_config, output_folder)

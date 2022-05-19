@@ -15,20 +15,20 @@ def calculate_metrics_for_dataset1():
 
     ipdd_quality_trace_path = 'data//output//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace' \
                               '//dataset1'
-    ipdd_quality_trace_filename = 'experiments_quality_metrics_trace_by_trace_dataset1.xlsx'
+    ipdd_quality_trace_filename = 'experiments_quality_metrics_trace_by_trace.xlsx'
 
     calculate_metrics_dataset(ipdd_quality_trace_path, ipdd_quality_trace_filename, metrics, dataset_config,
                               save_input_for_calculation=True)
 
     ipdd_quality_windowing_path = 'data//output//controlflow_adaptive//detection_on_quality_metrics_fixed_window' \
                                   '//dataset1'
-    ipdd_quality_windowing_filename = 'experiments_quality_metrics_fixed_window_dataset1.xlsx'
+    ipdd_quality_windowing_filename = 'experiments_quality_metrics_fixed_window.xlsx'
     calculate_metrics_dataset(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, metrics, dataset_config,
                               save_input_for_calculation=True)
 
     ipdd_model_similarity_path = 'data//output//controlflow_adaptive//detection_on_model_similarity_fixed_window' \
                                  '//dataset1'
-    ipdd_model_similarity_filename = 'experiments_model_similarity_fixed_window_dataset1.xlsx'
+    ipdd_model_similarity_filename = 'experiments_model_similarity_fixed_window.xlsx'
     calculate_metrics_dataset(ipdd_model_similarity_path, ipdd_model_similarity_filename, metrics, dataset_config,
                               save_input_for_calculation=True)
 
