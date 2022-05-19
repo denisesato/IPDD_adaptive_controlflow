@@ -140,14 +140,13 @@ def calculate_edges_similarity_metric(m, initial_edges, current_edges):
     return value, added, removed
 
 
-# apply the ADWIN detector (scikit-multiflow) in two quality metrics: fitness and precision
-# the metrics are calculated using the last trace read and the model generated using the first traces (stable_period)
-# it is possible to consider all the traces read since the last drift for calculating the metrics (commented)
-# when a drift is detected a new model is discovered using the next traces (stable_period)
-# the inductive miner is applied for discovering the model
+# Apply the ADWIN detector (scikit-multiflow) in two quality dimensions: fitness and precision
+# The metrics for each dimension are defined by parameter metrics (dictionary)
+# The metrics are calculated using the last trace read and the model generated using the first traces (stable_period)
+# When a drift is detected a new model may be discovered using the next traces (stable_period)
+# The process model is discovered using the inductive miner
 def apply_detector_on_quality_metrics_trace_by_trace(folder, logname, metrics, delta_detection, stable_period,
-                                                     output_folder,
-                                                     update_model=True):
+                                                     output_folder, update_model=True):
     output_folder = f'{output_folder}_d{delta_detection}_sp{stable_period}'
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -162,6 +161,7 @@ def apply_detector_on_quality_metrics_trace_by_trace(folder, logname, metrics, d
     print(f'Initial model discovered using traces from 0 to {stable_period - 1}')
     log_for_model = EventLog(eventlog[0:stable_period])
     net, im, fm = inductive_miner.apply(log_for_model)
+    # other discovery algorithms can be applied
     # net, im, fm = heuristics_miner.apply(log_for_model)
     # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMf)
     # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMd)
@@ -186,22 +186,6 @@ def apply_detector_on_quality_metrics_trace_by_trace(folder, logname, metrics, d
         print(f'Reading trace [{i}]...')
         last_trace = EventLog(eventlog[i:(i + 1)])
 
-        # get all the traces since started the log or since the last drift
-        if i >= final_trace_id:
-            all_traces_since_last_drift = EventLog(eventlog[initial_trace_id:(i + 1)])
-        else:
-            all_traces_since_last_drift = EventLog(eventlog[initial_trace_id:final_trace_id])
-
-        # get the last n traces (n is defined by stable_period)
-        if i - stable_period < initial_trace_id:
-            # if we are still reading the traces from stable period
-            # get the first traces from the stable period
-            last_n_traces = EventLog(eventlog[initial_trace_id:stable_period])
-            print(f'Last n traces considered [{initial_trace_id}-{stable_period - 1}]')
-        else:
-            last_n_traces = EventLog(eventlog[i - stable_period:i])
-            print(f'Last n traces considered [{i - stable_period}-{i - 1}]')
-
         # check if one of the metrics report a drift
         drift_detected = False
         for dimension in metrics.keys():
@@ -209,16 +193,7 @@ def apply_detector_on_quality_metrics_trace_by_trace(folder, logname, metrics, d
             # for each dimension decide if the metric should be calculated using only the last trace read or all
             # the traces read since the last drift
             new_value = 0
-            if dimension == QualityDimension.FITNESS.name:
-                new_value = calculate_quality_metric(metrics[dimension], last_trace, net, im, fm) * 100
-            if dimension == QualityDimension.PRECISION.name:
-                new_value = calculate_quality_metric(metrics[dimension], last_trace, net, im, fm) * 100
-                # new_value = calculate_metric(metrics[dimension], all_traces_since_last_drift, net, im, fm) * 100
-                # new_value = calculate_metric(metrics[dimension], last_n_traces, net, im, fm) * 100
-            if dimension == QualityDimension.GENERALIZATION.name:
-                new_value = calculate_quality_metric(metrics[dimension], last_trace, net, im, fm) * 100
-                # new_value = calculate_metric(metrics[dimension], all_traces_since_last_drift, net, im, fm)
-                # new_value = calculate_metric(metrics[dimension], last_n_traces, net, im, fm) * 100
+            new_value = calculate_quality_metric(metrics[dimension], last_trace, net, im, fm) * 100
             values[dimension].append(new_value)
             # update the new value in the detector
             adwin_detection[dimension].add_element(new_value)
@@ -233,7 +208,6 @@ def apply_detector_on_quality_metrics_trace_by_trace(folder, logname, metrics, d
             for dimension in metrics.keys():
                 # reset the detectors to avoid a new drift during the stable period
                 adwin_detection[dimension].reset()
-            initial_trace_id = i
             # discover a new model using the next traces (stable_period)
             final_trace_id = i + stable_period
             if final_trace_id > total_of_traces:
@@ -243,6 +217,7 @@ def apply_detector_on_quality_metrics_trace_by_trace(folder, logname, metrics, d
                 print(f'Discover a new model using traces from {i} to {final_trace_id - 1}')
                 log_for_model = EventLog(eventlog[i:final_trace_id])
                 net, im, fm = inductive_miner.apply(log_for_model)
+                # other discovery algorithms can be applied
                 # net, im, fm = heuristics_miner.apply(log_for_model)
                 # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMf)
                 # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMd)
@@ -271,125 +246,6 @@ def apply_detector_on_quality_metrics_trace_by_trace(folder, logname, metrics, d
 # a new initial model is discovered
 # The change point is the initial trace of the window when the similarity informed that a behavior is removed
 # Otherwise the change point is the current trace
-def apply_detector_on_model_similarity_fixed_window(folder, logname, metrics, delta_detection, window_size,
-                                                    output_folder, factor):
-    models_path = os.path.join(output_folder, 'models')
-    if not os.path.exists(models_path):
-        os.makedirs(models_path)
-
-    # for debug
-    # debug_path = os.path.join(output_folder, 'models_for_debug')
-    # if not os.path.exists(debug_path):
-    #     os.makedirs(debug_path)
-
-    # import the event log sorted by timestamp
-    variant = xes_importer.Variants.ITERPARSE
-    parameters = {variant.value.Parameters.TIMESTAMP_SORT: True}
-    original_eventlog = xes_importer.apply(os.path.join(folder, logname), variant=variant, parameters=parameters)
-    # convert to interval log, if no interval log is provided as input this line has no effect
-    eventlog = interval_lifecycle.to_interval(original_eventlog)
-    # derive the initial model using the parameter stable_period
-    print(f'Initial model discovered using traces from 0 to {window_size - 1}')
-    base_window = EventLog(eventlog[0:window_size])
-    # get the activities of the log
-    base_activities = list(attributes_filter.get_attribute_values(base_window, "concept:name").keys())
-    # mine the DFG (using Pm4Py)
-    base_dfg, start_activities, end_activities = discover_directly_follows_graph(base_window)
-    parameters = {dfg_visualization.Variants.FREQUENCY.value.Parameters.START_ACTIVITIES: start_activities,
-                  dfg_visualization.Variants.FREQUENCY.value.Parameters.END_ACTIVITIES: end_activities}
-    model_no = 1
-    gviz = dfg_visualization.apply(base_dfg, log=base_window, parameters=parameters)
-    dfg_visualization.save(gviz, os.path.join(models_path,
-                                              f'{logname}_w{window_size}_d{delta_detection}_DFG{model_no}_[0-{window_size - 1}].png'))
-
-    adwin_detection = {}
-    drifts = {}
-    values = {}
-
-    for m in metrics:
-        # instantiate one detector for each similarity metric
-        adwin_detection[m.name] = ADWIN(delta=delta_detection)
-        drifts[m.name] = []
-        values[m.name] = []
-        for i in range(0, window_size):
-            values[m.name].append(factor)
-            adwin_detection[m.name].add_element(factor)
-    # fill the initial values for the initial model
-    print(f'Added {window_size} values for similarity during the stable period')
-
-    total_of_traces = len(eventlog)
-    initial_trace_id = 0
-    for i in range(window_size, total_of_traces):
-        if i >= initial_trace_id + window_size:
-            print(f'Reading trace [{i}] - Current model [{i - window_size + 1}-{i}]')
-            current_window = EventLog(eventlog[i - window_size + 1:(i + 1)])
-            # get the current activities
-            current_activities = list(attributes_filter.get_attribute_values(current_window, "concept:name").keys())
-            # get the current edges from the directly-follows graph
-            current_dfg, current_start_activities, current_end_activities = discover_directly_follows_graph(
-                current_window)
-
-            # for debug save the current models
-            # gviz = dfg_visualization.apply(current_dfg, log=current_window, parameters=parameters)
-            # dfg_visualization.save(gviz, os.path.join(debug_path,
-            #                                           f'{logname}_CurrentDFG_[{i-window_size+1}-{i}]_.png'))
-
-            # check if one of the metrics report a drift
-            drift_detected = False
-            for m in metrics:
-                # calculate all the defined metrics
-                new_value, added, removed = calculate_similarity_metric(m, base_activities, base_dfg,
-                                                                        current_activities,
-                                                                        current_dfg)
-                new_value = new_value * factor
-                print(f'Metric [{m}] - {new_value} - added {added} - removed {removed}')
-                values[m.name].append(new_value)
-                # update the new value in the detector
-                adwin_detection[m.name].add_element(new_value)
-                if adwin_detection[m.name].detected_change():
-                    if len(removed) > 0:
-                        # if something is removed from the previous model, assume the beginning
-                        # of the window as the change point
-                        change_point = i - window_size
-                    else:
-                        # if new behavior have been detected assume the end of the current window as the change point
-                        change_point = i
-                    # drift detected, save it
-                    drifts[m.name].append(change_point)
-                    print(f'Metric [{m.value}] - Drift detected at trace {i}')
-                    print(f'Change point set to {change_point}')
-                    # print(f'Added {added} - Removed {removed}')
-                    drift_detected = True
-
-            # if at least one metric report a drift a new model is discovered
-            if drift_detected:
-                for m in metrics:
-                    # reset the detectors to avoid a new drift during the stable period
-                    adwin_detection[m.name].reset()
-
-                # Replace the base models using the current one
-                base_window = current_window
-                base_activities = current_activities
-                base_dfg = current_dfg
-                # save the new model
-                model_no += 1
-                gviz = dfg_visualization.apply(base_dfg, log=base_window, parameters=parameters)
-                dfg_visualization.save(gviz, os.path.join(models_path,
-                                                          f'{logname}_w{window_size}_d{delta_detection}_DFG{model_no}_[{i - window_size + 1}-{i}].png'))
-
-    print(f'Size of values: {len(values[metrics[0].name])}')
-    all_drifts = []
-    for m in metrics:
-        all_drifts += drifts[m.name]
-        df = pd.DataFrame(values[m.name])
-        df.to_excel(os.path.join(output_folder, f'{logname}_{m.value}_d{delta_detection}_w{window_size}.xlsx'))
-    all_drifts = list(set(all_drifts))
-    all_drifts.sort()
-    save_plot(metrics, values, output_folder, f'{logname}_d{delta_detection}_w{window_size}', all_drifts,
-              similarity=True)
-    return all_drifts
-
-
 def apply_detector_on_model_similarity_fixed_window(folder, logname, metrics, delta_detection, window_size,
                                                     output_folder, factor):
     models_path = os.path.join(output_folder, 'models')
