@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-
 from evaluation_metrics import change_points_key
 from detect_controlflow_drift import apply_detector_on_quality_metrics_trace_by_trace, QualityDimension, \
     SimilarityMetric, apply_detector_on_model_similarity_fixed_window, apply_detector_on_quality_metrics_fixed_window, \
@@ -162,6 +161,9 @@ class Dataset1Configuration:
 
 
 class Dataset2Configuration:
+    ###############################################################
+    # Information about the data for performing the experiments
+    ###############################################################
     input_folder = 'data/input/logs/Controlflow/dataset2'
 
     lognames2500 = [
@@ -259,7 +261,7 @@ class Dataset2Configuration:
     # deltas = [0.002]
 
 
-def dataset1_similarity_strategie_fixed_window(dataset_config, output_folder):
+def model_similarity_strategie_fixed_window(dataset_config, output_folder):
     metrics = [
         # SimilarityMetric.NODES,
         SimilarityMetric.EDGES
@@ -281,10 +283,10 @@ def dataset1_similarity_strategie_fixed_window(dataset_config, output_folder):
                     dataset_config.input_folder, log, metrics, d, w, output_folder, 100)
 
     df1 = pd.DataFrame.from_dict(drifts, orient='index')
-    df1.to_excel(os.path.join(output_folder, 'experiments_model_similarity_fixed_window_dataset1.xlsx'))
+    df1.to_excel(os.path.join(output_folder, 'experiments_model_similarity_fixed_window.xlsx'))
 
 
-def dataset1_quality_strategie_trace_by_trace(dataset_config, output_folder):
+def quality_strategie_trace_by_trace(dataset_config, output_folder):
     # different metrics can be used for each dimension evaluated
     # by now we expected one metric for fitness quality dimension and other for precision quality dimension
     metrics = {
@@ -300,15 +302,13 @@ def dataset1_quality_strategie_trace_by_trace(dataset_config, output_folder):
         for sp in dataset_config.winsizes:
             for d in dataset_config.deltas:
                 drifts[log][f'{change_points_key}d={d} sp={sp}'] = apply_detector_on_quality_metrics_trace_by_trace(
-                    dataset_config.input_folder, log,
-                    metrics, d, sp,
-                    output_folder)
+                    dataset_config.input_folder, log, metrics, d, sp, output_folder)
 
     df1 = pd.DataFrame.from_dict(drifts, orient='index')
-    df1.to_excel(os.path.join(output_folder, 'experiments_quality_metrics_trace_by_trace_dataset1.xlsx'))
+    df1.to_excel(os.path.join(output_folder, 'experiments_quality_metrics_trace_by_trace.xlsx'))
 
 
-def dataset1_quality_strategie_fixed_window(dataset_config, output_folder):
+def quality_strategie_fixed_window(dataset_config, output_folder):
     drifts = dict.fromkeys(dataset_config.lognames)
     for log in dataset_config.lognames:
         drifts[log] = {}
@@ -316,11 +316,10 @@ def dataset1_quality_strategie_fixed_window(dataset_config, output_folder):
             for d in dataset_config.deltas:
                 drifts[log][f'{change_points_key}d={d} w={winsize}'] = \
                     apply_detector_on_quality_metrics_fixed_window(dataset_config.input_folder, log, output_folder,
-                                                                   winsize, d,
-                                                                   100)
+                                                                   winsize, d, 100)
 
     df1 = pd.DataFrame.from_dict(drifts, orient='index')
-    df1.to_excel(os.path.join(output_folder, 'experiments_quality_metrics_fixed_window_dataset1.xlsx'))
+    df1.to_excel(os.path.join(output_folder, 'experiments_quality_metrics_fixed_window.xlsx'))
 
 
 def dataset1_quality_strategie_adaptive_window(dataset_config, output_folder):
@@ -334,24 +333,33 @@ def dataset1_quality_strategie_adaptive_window(dataset_config, output_folder):
             d = 0.1
             drifts[log][f'{change_points_key}d={d} w={winsize}'] = \
                 apply_detector_on_quality_metrics_adaptive_window(dataset_config.input_folder, log, output_folder,
-                                                                  winsize, d,
-                                                                  100)
+                                                                  winsize, d, 100)
     df1 = pd.DataFrame.from_dict(drifts, orient='index')
-    df1.to_excel(os.path.join(output_folder, 'experiments_quality_metrics_adaptive_window_dataset1.xlsx'))
+    df1.to_excel(os.path.join(output_folder, 'experiments_quality_metrics_adaptive_window.xlsx'))
 
 
 if __name__ == '__main__':
+    #################################################################
     # EXPERIMENTS USING DATASET 1
+    #################################################################
     dataset_config = Dataset1Configuration()
-
     output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_trace_by_trace/dataset1'
-    dataset1_quality_strategie_trace_by_trace(dataset_config, output_folder)
-
+    quality_strategie_trace_by_trace(dataset_config, output_folder)
     output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_fixed_window/dataset1'
-    dataset1_quality_strategie_fixed_window(dataset_config, output_folder)
-
-    output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity_fixed_window/dataset1'
-    dataset1_similarity_strategie_fixed_window(dataset_config, output_folder)
-
+    quality_strategie_fixed_window(dataset_config, output_folder)
+    # output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity_fixed_window/dataset1'
+    # model_similarity_strategie_fixed_window(dataset_config, output_folder)
     output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_adaptive_window/dataset1'
+    dataset1_quality_strategie_adaptive_window(dataset_config, output_folder)
+    #################################################################
+    # EXPERIMENTS USING DATASET 2
+    #################################################################
+    dataset_config = Dataset2Configuration()
+    output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_trace_by_trace/dataset2'
+    quality_strategie_trace_by_trace(dataset_config, output_folder)
+    output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_fixed_window/dataset2'
+    quality_strategie_fixed_window(dataset_config, output_folder)
+    # output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity_fixed_window/dataset2'
+    # model_similarity_strategie_fixed_window(dataset_config, output_folder)
+    output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_adaptive_window/dataset2'
     dataset1_quality_strategie_adaptive_window(dataset_config, output_folder)
