@@ -49,7 +49,7 @@ def plot_window_size_grouping_by_logsize(df, selected_column, title, delta=None)
     plt.show()
 
 
-def plot_window_size_grouping_by_change_pattern(df, selected_column, title, window, delta=None):
+def plot_window_size_grouping_by_change_pattern(df, selected_column, title, window=None, delta=None):
     ############################################################
     # Grouping by logsize
     ############################################################
@@ -63,20 +63,22 @@ def plot_window_size_grouping_by_change_pattern(df, selected_column, title, wind
         columns={element: re.sub(r'(\D.*?)(\d+)(?!.*\d)', r'\2', element, count=1)
                  for element in df_filtered.columns.tolist()})
 
-    # filter only the results for the define window
-    df_plot = df_plot.filter(like=f'{window}', axis=1)
+    # filter only the results for the defined window if the parameter is set
+    if window:
+        df_plot = df_plot.filter(like=f'{window}', axis=1)
+        window_str = f'window {window}'
 
-    # sort columns
-    # ordered_columns = [int(w) for w in df_plot.columns]
-    # ordered_columns.sort()
-    # ordered_columns = [str(w) for w in ordered_columns]
-    # df_plot = df_plot[ordered_columns]
-
+    # grouped by change pattern
     regexp = '([a-zA-Z]*)\d.*.xes$'
     change_pattern = df_plot.index.str.extract(regexp, expand=False)
     df_plot = df_plot.groupby(change_pattern).mean()
+
+    # if window is not informed calculate the mean value considering all windows
+    if not window:
+        df_plot = df_plot.T.mean().to_frame()
+        window_str = f'all windows'
+
     # sort columns
-    # df_plot.sort_index()
     df_plot['labels'] = df_plot.index.str.lower()
     df_plot = df_plot.sort_values('labels').drop('labels', axis=1)
     plt.cla()
@@ -85,11 +87,14 @@ def plot_window_size_grouping_by_change_pattern(df, selected_column, title, wind
     plt.xlabel('Change pattern')
     plt.ylabel(selected_column)
     if delta:
-        plt.title(f'{title}\n{selected_column} by change pattern - window={window} delta={delta}')
+        plt.title(f'{title}\n{selected_column} by change pattern - {window_str} - delta={delta}')
     else:
-        plt.title(f'{title}\n{selected_column} by change pattern - window={window}')
+        plt.title(f'{title}\n{selected_column} by change pattern - {window_str}')
     if 'f_score' in selected_column:
         plt.ylim(0.0, 1.0)
+    if 'mean_delay' in selected_column:
+        plt.ylim(0, 200)
+    plt.tight_layout()
     plt.grid(True)
     plt.show()
 
@@ -103,8 +108,9 @@ def analyze_metrics_ipdd(input_path, filename, dataset_config, selected_column, 
     # Impact of the window size on the metrics
     ############################################################
     for d in dataset_config.deltas:
-        # plot_window_size_grouping_by_logsize(df, selected_column, title, d)
-        plot_window_size_grouping_by_change_pattern(df, selected_column, title, 100, d)
+        plot_window_size_grouping_by_logsize(df, selected_column, title, d)
+        plot_window_size_grouping_by_change_pattern(df, selected_column, title, delta=d)
+        plot_window_size_grouping_by_change_pattern(df, selected_column, title, window=100, delta=d)
 
 
 def analyze_metrics(input_path, filename, selected_column, title):
@@ -115,8 +121,9 @@ def analyze_metrics(input_path, filename, selected_column, title):
     ############################################################
     # Impact of the window size on the metrics
     ############################################################
-    # plot_window_size_grouping_by_logsize(df, selected_column, title)
-    plot_window_size_grouping_by_change_pattern(df, selected_column, title, 100)
+    plot_window_size_grouping_by_logsize(df, selected_column, title)
+    plot_window_size_grouping_by_change_pattern(df, selected_column, title)
+    plot_window_size_grouping_by_change_pattern(df, selected_column, title, window=100)
 
 
 def dataset1():
@@ -126,34 +133,34 @@ def dataset1():
 
     ipdd_quality_trace_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
                               '//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace//dataset1'
-    ipdd_quality_trace_filename = 'metrics_experiments_quality_metrics_trace_by_trace_dataset1.xlsx'
+    ipdd_quality_trace_filename = 'metrics_experiments_quality_metrics_trace_by_trace.xlsx'
     analyze_metrics_ipdd(ipdd_quality_trace_path, ipdd_quality_trace_filename, config, f_score_column_ipdd,
                          'Quality Metrics - Trace Approach')
     analyze_metrics_ipdd(ipdd_quality_trace_path, ipdd_quality_trace_filename, config, mean_delay_column_ipdd,
                          'Quality Metrics - Trace Approach')
 
-    ipdd_quality_windowing_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
-                                  '//controlflow_adaptive//detection_on_quality_metrics_fixed_window//dataset1'
-    ipdd_quality_windowing_filename = 'metrics_experiments_quality_metrics_fixed_window_dataset1.xlsx'
-    analyze_metrics_ipdd(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, config, f_score_column_ipdd,
-                         'Quality Metrics - Window Approach')
-    analyze_metrics_ipdd(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, config, mean_delay_column_ipdd,
-                         'Quality Metrics - Window Approach')
-
-    ipdd_model_similarity_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
-                                 '//controlflow_adaptive//detection_on_model_similarity_fixed_window//dataset1'
-    ipdd_model_similarity_filename = 'metrics_experiments_model_similarity_fixed_window_dataset1.xlsx'
-    analyze_metrics_ipdd(ipdd_model_similarity_path, ipdd_model_similarity_filename, config, f_score_column_ipdd,
-                         'Model Similarity')
-    analyze_metrics_ipdd(ipdd_model_similarity_path, ipdd_model_similarity_filename, config, mean_delay_column_ipdd,
-                         'Model Similarity')
-
-    apromore_path = 'C://Users//denisesato//Experimentos_Tese//Apromore//experimento2//dataset1'
-    apromore_filename = 'metrics_results_prodrift.xlsx'
-    analyze_metrics(apromore_path, apromore_filename, 'f_score awin', 'AWIN')
-    analyze_metrics(apromore_path, apromore_filename, 'mean_delay awin', 'AWIN')
-    analyze_metrics(apromore_path, apromore_filename, 'f_score fwin', 'FWIN')
-    analyze_metrics(apromore_path, apromore_filename, 'mean_delay fwin', 'FWIN')
+    # ipdd_quality_windowing_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
+    #                               '//controlflow_adaptive//detection_on_quality_metrics_fixed_window//dataset1'
+    # ipdd_quality_windowing_filename = 'metrics_experiments_quality_metrics_fixed_window.xlsx'
+    # analyze_metrics_ipdd(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, config, f_score_column_ipdd,
+    #                      'Quality Metrics - Window Approach')
+    # analyze_metrics_ipdd(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, config, mean_delay_column_ipdd,
+    #                      'Quality Metrics - Window Approach')
+    #
+    # ipdd_model_similarity_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
+    #                              '//controlflow_adaptive//detection_on_model_similarity_fixed_window//dataset1'
+    # ipdd_model_similarity_filename = 'metrics_experiments_model_similarity_fixed_window.xlsx'
+    # analyze_metrics_ipdd(ipdd_model_similarity_path, ipdd_model_similarity_filename, config, f_score_column_ipdd,
+    #                      'Model Similarity')
+    # analyze_metrics_ipdd(ipdd_model_similarity_path, ipdd_model_similarity_filename, config, mean_delay_column_ipdd,
+    #                      'Model Similarity')
+    #
+    # apromore_path = 'C://Users//denisesato//Experimentos_Tese//Apromore//experimento2//dataset1'
+    # apromore_filename = 'metrics_results_prodrift.xlsx'
+    # analyze_metrics(apromore_path, apromore_filename, 'f_score awin', 'AWIN')
+    # analyze_metrics(apromore_path, apromore_filename, 'mean_delay awin', 'AWIN')
+    # analyze_metrics(apromore_path, apromore_filename, 'f_score fwin', 'FWIN')
+    # analyze_metrics(apromore_path, apromore_filename, 'mean_delay fwin', 'FWIN')
 
     # vdd_path = 'C://Users//denisesato//Experimentos_Tese//VDD//dataset1//output_console'
     # vdd_filename = 'metrics_results_vdd.xlsx'
