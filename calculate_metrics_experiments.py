@@ -13,12 +13,12 @@ metrics = [
 def calculate_metrics_for_dataset1():
     dataset_config = Dataset1Configuration()
 
-    ipdd_quality_trace_path = 'data//output//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace' \
-                              '//dataset1'
-    ipdd_quality_trace_filename = 'experiments_quality_metrics_trace_by_trace.xlsx'
-
-    calculate_metrics_dataset(ipdd_quality_trace_path, ipdd_quality_trace_filename, metrics, dataset_config,
-                              save_input_for_calculation=True)
+    # ipdd_quality_trace_path = 'data//output//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace' \
+    #                           '//dataset1'
+    # ipdd_quality_trace_filename = 'experiments_quality_metrics_trace_by_trace.xlsx'
+    #
+    # calculate_metrics_dataset(ipdd_quality_trace_path, ipdd_quality_trace_filename, metrics, dataset_config,
+    #                           save_input_for_calculation=True)
 
     # ipdd_quality_windowing_path = 'data//output//controlflow_adaptive//detection_on_quality_metrics_fixed_window' \
     #                               '//dataset1'
@@ -32,10 +32,10 @@ def calculate_metrics_for_dataset1():
     # calculate_metrics_dataset(ipdd_model_similarity_path, ipdd_model_similarity_filename, metrics, dataset_config,
     #                           save_input_for_calculation=True)
     #
-    # prodrift_filepath = 'C://Users//denisesato//Experimentos_Tese//Apromore//experimento2//dataset1'
-    # prodrift_filename = 'results_prodrift.xlsx'
-    # calculate_metrics_dataset(prodrift_filepath, prodrift_filename, metrics, dataset_config,
-    #                           save_input_for_calculation=True)
+    prodrift_filepath = 'C://Users//denisesato//Experimentos_Tese//Apromore//experimento2//dataset1'
+    prodrift_filename = 'results_prodrift.xlsx'
+    calculate_metrics_dataset(prodrift_filepath, prodrift_filename, metrics, dataset_config,
+                              save_input_for_calculation=True)
 
     # vdd_filepath = 'C://Users//denisesato//Experimentos_Tese//VDD//dataset1//output_console'
     # vdd_filename = 'results_VDD.xlsx'

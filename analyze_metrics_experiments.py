@@ -93,7 +93,7 @@ def plot_window_size_grouping_by_change_pattern(df, selected_column, title, wind
     if 'f_score' in selected_column:
         plt.ylim(0.0, 1.0)
     if 'mean_delay' in selected_column:
-        plt.ylim(0, 200)
+        plt.ylim(0, 300)
     plt.tight_layout()
     plt.grid(True)
     plt.show()
@@ -131,13 +131,13 @@ def dataset1():
     f_score_column_ipdd = 'f_score'
     mean_delay_column_ipdd = 'mean_delay'
 
-    ipdd_quality_trace_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
-                              '//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace//dataset1'
-    ipdd_quality_trace_filename = 'metrics_experiments_quality_metrics_trace_by_trace.xlsx'
-    analyze_metrics_ipdd(ipdd_quality_trace_path, ipdd_quality_trace_filename, config, f_score_column_ipdd,
-                         'Quality Metrics - Trace Approach')
-    analyze_metrics_ipdd(ipdd_quality_trace_path, ipdd_quality_trace_filename, config, mean_delay_column_ipdd,
-                         'Quality Metrics - Trace Approach')
+    # ipdd_quality_trace_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
+    #                           '//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace//dataset1'
+    # ipdd_quality_trace_filename = 'metrics_experiments_quality_metrics_trace_by_trace.xlsx'
+    # analyze_metrics_ipdd(ipdd_quality_trace_path, ipdd_quality_trace_filename, config, f_score_column_ipdd,
+    #                      'Quality Metrics - Trace Approach')
+    # analyze_metrics_ipdd(ipdd_quality_trace_path, ipdd_quality_trace_filename, config, mean_delay_column_ipdd,
+    #                      'Quality Metrics - Trace Approach')
 
     # ipdd_quality_windowing_path = 'C://Users//denisesato//PycharmProjects//IPDD_adaptive_controlflow//data//output' \
     #                               '//controlflow_adaptive//detection_on_quality_metrics_fixed_window//dataset1'
@@ -155,12 +155,12 @@ def dataset1():
     # analyze_metrics_ipdd(ipdd_model_similarity_path, ipdd_model_similarity_filename, config, mean_delay_column_ipdd,
     #                      'Model Similarity')
     #
-    # apromore_path = 'C://Users//denisesato//Experimentos_Tese//Apromore//experimento2//dataset1'
-    # apromore_filename = 'metrics_results_prodrift.xlsx'
-    # analyze_metrics(apromore_path, apromore_filename, 'f_score awin', 'AWIN')
-    # analyze_metrics(apromore_path, apromore_filename, 'mean_delay awin', 'AWIN')
-    # analyze_metrics(apromore_path, apromore_filename, 'f_score fwin', 'FWIN')
-    # analyze_metrics(apromore_path, apromore_filename, 'mean_delay fwin', 'FWIN')
+    apromore_path = 'C://Users//denisesato//Experimentos_Tese//Apromore//experimento2//dataset1'
+    apromore_filename = 'metrics_results_prodrift.xlsx'
+    analyze_metrics(apromore_path, apromore_filename, 'f_score awin', 'AWIN')
+    analyze_metrics(apromore_path, apromore_filename, 'mean_delay awin', 'AWIN')
+    analyze_metrics(apromore_path, apromore_filename, 'f_score fwin', 'FWIN')
+    analyze_metrics(apromore_path, apromore_filename, 'mean_delay fwin', 'FWIN')
 
     # vdd_path = 'C://Users//denisesato//Experimentos_Tese//VDD//dataset1//output_console'
     # vdd_filename = 'metrics_results_vdd.xlsx'
