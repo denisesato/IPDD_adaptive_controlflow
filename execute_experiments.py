@@ -120,37 +120,38 @@ class Dataset1Configuration:
     }
 
     # for files that do not follow the correct pattern
-    exceptions_in_actual_change_points = {
-        'cb10k.xes':
-            {'actual_change_points': [5000],
-             'number_of_instances': 5000},
-        'lp2.5k.xes':
-            {'actual_change_points': define_change_points_dataset1(500),
-             'number_of_instances': 5000},
-        'lp5k.xes':
-            {'actual_change_points': define_change_points_dataset1(1000),
-             'number_of_instances': 1000},
-        'lp7.5k.xes':
-            {'actual_change_points': [1000, 3500, 4000, 6500, 7000, 9500, 10000, 12500, 13000],
-             'number_of_instances': 15000},
-        'lp10k.xes':
-            {'actual_change_points': [1000, 3500, 4000, 6500, 7000, 9500, 10000, 12500, 13000],
-             'number_of_instances': 15000},
-        're2.5k.xes':
-            {'actual_change_points': define_change_points_dataset1(500),
-             'number_of_instances': 5000},
-        're5k.xes':
-            {'actual_change_points': define_change_points_dataset1(1000),
-             'number_of_instances': 10000},
-        're7.5k.xes':
-            {'actual_change_points': [1000, 2000, 2500, 3500, 4000, 5000, 5500, 6500, 7000, 8000, 8500, 9500, 10000,
-                                      11000, 11500,
-                                      12500, 13000],
-             'number_of_instances': 15000},
-        're10k.xes':
-            {'actual_change_points': define_change_points_dataset1(2000),
-             'number_of_instances': 20000},
-    }
+    # exceptions_in_actual_change_points = {
+    #     'cb10k.xes':
+    #         {'actual_change_points': [5000],
+    #          'number_of_instances': 5000},
+    #     'lp2.5k.xes':
+    #         {'actual_change_points': define_change_points_dataset1(500),
+    #          'number_of_instances': 5000},
+    #     'lp5k.xes':
+    #         {'actual_change_points': define_change_points_dataset1(1000),
+    #          'number_of_instances': 1000},
+    #     'lp7.5k.xes':
+    #         {'actual_change_points': [1000, 3500, 4000, 6500, 7000, 9500, 10000, 12500, 13000],
+    #          'number_of_instances': 15000},
+    #     'lp10k.xes':
+    #         {'actual_change_points': [1000, 3500, 4000, 6500, 7000, 9500, 10000, 12500, 13000],
+    #          'number_of_instances': 15000},
+    #     're2.5k.xes':
+    #         {'actual_change_points': define_change_points_dataset1(500),
+    #          'number_of_instances': 5000},
+    #     're5k.xes':
+    #         {'actual_change_points': define_change_points_dataset1(1000),
+    #          'number_of_instances': 10000},
+    #     're7.5k.xes':
+    #         {'actual_change_points': [1000, 2000, 2500, 3500, 4000, 5000, 5500, 6500, 7000, 8000, 8500, 9500, 10000,
+    #                                   11000, 11500,
+    #                                   12500, 13000],
+    #          'number_of_instances': 15000},
+    #     're10k.xes':
+    #         {'actual_change_points': define_change_points_dataset1(2000),
+    #          'number_of_instances': 20000},
+    # }
+    exceptions_in_actual_change_points = {}
 
     number_of_instances = {
         '2.5k': 2500,
