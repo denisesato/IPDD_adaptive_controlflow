@@ -75,9 +75,15 @@ def compile_results_from_prodrift(filepath, filenames):
     print(f'*****************************************************************')
 
 
-if __name__ == '__main__':
-    results_filepath = 'C://Users//denisesato//Experimentos_Tese//Apromore//experimento2//dataset1//'
+def compile_results_for_dataset(results_filepath):
     file_type = '.txt'
     key = 'log_'
     filenames = get_Apromore_files(results_filepath, key, file_type)
     compile_results_from_prodrift(results_filepath, filenames)
+
+
+if __name__ == '__main__':
+    filepath = 'C://Users//denisesato//Experimentos_Tese//Apromore//dataset1//'
+    compile_results_for_dataset(filepath)
+    filepath = 'C://Users//denisesato//Experimentos_Tese//Apromore//dataset2//'
+    compile_results_for_dataset(filepath)
