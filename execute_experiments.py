@@ -160,6 +160,12 @@ class Dataset1Configuration:
         '10k': 10000
     }
 
+    ###############################################################
+    # Plot specific information
+    ###############################################################
+    # For defining the correct order for the legend of the plots
+    order_legend = [1, 2, 3, 0]
+
 
 class Dataset2Configuration:
     ###############################################################
@@ -223,6 +229,25 @@ class Dataset2Configuration:
         'rp8k.xes',
         'sw8k.xes',
     ]
+    ###############################################################
+    # Information for calculating evaluation metrics
+    ###############################################################
+    exceptions_in_actual_change_points = {}
+    actual_change_points = {
+        '3k': [250, 750, 1500, 2500],  # 3,000 traces (4 drifts)
+        '4.5k': [250, 750, 1500, 2500, 3250, 3750, 4000],  # 4,500 traces (7 drifts)
+        '8k': [250, 750, 1500, 2500, 3250, 3750, 4000, 4500, 5250, 6250, 7000, 7500, 7750],  # 8,000 traces (13 drifts)
+    }
+    number_of_instances = {
+        '3k': 3000,
+        '4.5k': 5000,
+        '8k': 8000,
+    }
+    ###############################################################
+    # Plot specific information
+    ###############################################################
+    # For defining the correct order for the legend of the plots
+    order_legend = None
 
     lognames = lognames3000 + lognames4500 + lognames8000
     # winsizes = [i for i in range(100, 1001, 100)]
@@ -316,24 +341,24 @@ if __name__ == '__main__':
     #################################################################
     # EXPERIMENTS USING DATASET 1
     #################################################################
-    # dataset_config = Dataset1Configuration()
-    # output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_trace_by_trace/dataset1'
-    # quality_strategie_trace_by_trace(dataset_config, output_folder)
-    # output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_fixed_window/dataset1'
-    # quality_strategie_fixed_window(dataset_config, output_folder)
-    # output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity_fixed_window/dataset1'
-    # model_similarity_strategie_fixed_window(dataset_config, output_folder)
-    # output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_adaptive_window/dataset1'
-    # quality_strategie_adaptive_window(dataset_config, output_folder)
+    dataset_config = Dataset1Configuration()
+    output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_trace_by_trace/dataset1'
+    quality_strategie_trace_by_trace(dataset_config, output_folder)
+    output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_fixed_window/dataset1'
+    quality_strategie_fixed_window(dataset_config, output_folder)
+    output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity_fixed_window/dataset1'
+    model_similarity_strategie_fixed_window(dataset_config, output_folder)
+    output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_adaptive_window/dataset1'
+    quality_strategie_adaptive_window(dataset_config, output_folder)
     #################################################################
     # EXPERIMENTS USING DATASET 2
     #################################################################
     dataset_config = Dataset2Configuration()
     output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_trace_by_trace/dataset2'
     quality_strategie_trace_by_trace(dataset_config, output_folder)
-    # output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_fixed_window/dataset2'
-    # quality_strategie_fixed_window(dataset_config, output_folder)
-    # output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity_fixed_window/dataset2'
-    # model_similarity_strategie_fixed_window(dataset_config, output_folder)
-    # output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_adaptive_window/dataset2'
-    # quality_strategie_adaptive_window(dataset_config, output_folder)
+    output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_fixed_window/dataset2'
+    quality_strategie_fixed_window(dataset_config, output_folder)
+    output_folder = f'data/output/controlflow_adaptive/detection_on_model_similarity_fixed_window/dataset2'
+    model_similarity_strategie_fixed_window(dataset_config, output_folder)
+    output_folder = f'data/output/controlflow_adaptive/detection_on_quality_metrics_adaptive_window/dataset2'
+    quality_strategie_adaptive_window(dataset_config, output_folder)
