@@ -192,7 +192,6 @@ def apply_detector_on_quality_metrics_trace_by_trace(folder, logname, metrics, d
             # calculate the metric for each dimension
             # for each dimension decide if the metric should be calculated using only the last trace read or all
             # the traces read since the last drift
-            new_value = 0
             new_value = calculate_quality_metric(metrics[dimension], last_trace, net, im, fm) * 100
             values[dimension].append(new_value)
             # update the new value in the detector
