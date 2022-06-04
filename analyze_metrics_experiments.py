@@ -352,17 +352,17 @@ def compare_tools_dataset(dataset_name, metric_name):
                 path_key: f'C://Users//denis//Documents//Doutorado_Experimentos//Apromore//{dataset_name}',
                 filename_key: 'metrics_results_prodrift.xlsx'
             },
-        # 'VDD':
-        #     {
-        #         metric_key: f'{metric_name} cluster',
-        #         path_key: f'C://Users//denis//Documents//Doutorado_Experimentos//Apromore//{dataset_name}',
-        #         filename_key: 'metrics_results_prodrift.xlsx'
-        #     },
+        'VDD':
+            {
+                metric_key: f'{metric_name} cluster',
+                path_key: f'D://Doutorado_Experimentos//VDD//experimento2//{dataset_name}//output_console',
+                filename_key: 'metrics_results_VDD.xlsx'
+            },
     }
     generate_plot_tools(approaches, metric_name)
 
 
-def friedman_tools(output_folder, dataset_name, metric_name):
+def friedman_tools(output_folder, dataset_name, metric_name, windows):
     approaches = {
         'IPDD Adaptive Trace by Trace':
             {
@@ -392,12 +392,12 @@ def friedman_tools(output_folder, dataset_name, metric_name):
                 path_key: f'C://Users//denis//Documents//Doutorado_Experimentos//Apromore//{dataset_name}',
                 filename_key: 'metrics_results_prodrift.xlsx'
             },
-        # 'VDD':
-        #     {
-        #         metric_key: f'{metric_name} cluster',
-        #         path_key: f'C://Users//denis//Documents//Doutorado_Experimentos//Apromore//{dataset_name}',
-        #         filename_key: 'metrics_results_prodrift.xlsx'
-        #     },
+        'VDD':
+            {
+                metric_key: f'{metric_name} cluster',
+                path_key: f'D://Doutorado_Experimentos//VDD//experimento2//{dataset_name}//output_console',
+                filename_key: 'metrics_results_VDD.xlsx'
+            },
     }
 
     # firstly enrich dict with dataframe from excel
@@ -419,6 +419,7 @@ def friedman_tools(output_folder, dataset_name, metric_name):
             columns={element: re.sub(r'(\D.*?)(\d+)(?!.*\d)', r'\2', element, count=1)
                      for element in df_filtered.columns.tolist()})
         series = df_filtered.mean()
+        series = series.filter(items=windows)
         series.name = key
         approaches[key][series_key] = series
 
@@ -428,7 +429,8 @@ def friedman_tools(output_folder, dataset_name, metric_name):
         approaches['IPDD Adaptive Trace by Trace'][series_key],
         approaches['IPDD Adaptive Windowing'][series_key],
         approaches['Apromore ProDrift AWIN'][series_key],
-        approaches['Apromore ProDrift FWIN'][series_key]
+        approaches['Apromore ProDrift FWIN'][series_key],
+        approaches['VDD'][series_key]
     )
     print(f'Friedman results for {metric_name} {dataset_name}')
     print('Statistics=%.3f, p=%.3f' % (stat, p))
@@ -441,7 +443,9 @@ def friedman_tools(output_folder, dataset_name, metric_name):
         # combine all approaches into one dataframe
         df_tools = pd.concat([approaches[approach][series_key] for approach in approaches.keys()], axis=1)
         result = sp.posthoc_nemenyi_friedman(df_tools)
-        print(f'Posthoc Nemenyi Friedman: {result}')
+        filename = os.path.join(output_folder, f'{dataset_name}_{metric_name}_data.xlsx')
+        df_tools.to_excel(filename)
+        # print(f'Posthoc Nemenyi Friedman: {result}')
         plt.cla()
         plt.clf()
         heatmap_args = {'linewidths': 0.25, 'linecolor': '0.5', 'clip_on': False, 'square': True,
@@ -612,15 +616,16 @@ if __name__ == '__main__':
     ######################################################################
     # compare_tools_dataset("dataset1", 'f_score')
     # compare_tools_dataset("dataset1", 'mean_delay')
-    # compare_tools_dataset("dataset2", 'f_score')
-    # compare_tools_dataset("dataset2", 'mean_delay')
+    compare_tools_dataset("dataset2", 'f_score')
+    compare_tools_dataset("dataset2", 'mean_delay')
+    windows = [str(i) for i in range(50, 301, 25)]
     output_folder = 'data/output/analysis'
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
-    friedman_tools(output_folder, "dataset1", "f_score")
-    friedman_tools(output_folder, "dataset1", "mean_delay")
-    friedman_tools(output_folder, "dataset2", "f_score")
-    friedman_tools(output_folder, "dataset2", "mean_delay")
+    # friedman_tools(output_folder, "dataset1", "f_score", windows)
+    # friedman_tools(output_folder, "dataset1", "mean_delay", windows)
+    friedman_tools(output_folder, "dataset2", "f_score", windows)
+    friedman_tools(output_folder, "dataset2", "mean_delay", windows)
 
     ######################################################################
     # Plot Apromore results

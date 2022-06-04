@@ -38,6 +38,7 @@ def read_drifts_VDD(file, winsize, winstep):
     line_with_windows = line_with_windows.strip()
     list_of_windows = line_with_windows.strip('][').split(', ')
     list_of_windows = convert_list_to_int(list_of_windows)
+    list_of_windows = list_of_windows[:-1]
     reported_drifts = [int(w * winstep) for w in list_of_windows]
     return reported_drifts
 
@@ -51,14 +52,15 @@ def compile_results_from_VDD(filepath, filenames, key):
         print(f'Reading file {file}...')
         print(f'*****************************************************************')
         complete_filename = os.path.join(filepath, file)
-        reexp = rf'{key}([a-zA-Z]*)(.*?)_w(\d*)_(\D*).txt'
+        reexp = rf'{key}([a-zA-Z]*)(.*?)_w(\d*)_s(\d*)_(\D*).txt'
         if match := re.search(reexp, file):
             pattern = match.group(1)
             logsize = match.group(2)
             winsize = match.group(3)
-            approach = match.group(4)
+            winstep = match.group(4)
+            approach = match.group(5)
         else:
-            print(f'Filename {file} do not follow the expected patter {pattern} - IGNORING...')
+            print(f'Filename {file} do not follow the expected patter {reexp} - IGNORING...')
             continue
 
         detected_drifts = read_drifts_VDD(complete_filename, int(winsize), int(winsize)/2)
@@ -79,7 +81,10 @@ def compile_results_from_VDD(filepath, filenames, key):
 
 
 if __name__ == '__main__':
-    results_filepath = 'C://Users//denisesato//Experimentos_Tese//VDD//dataset1//output_console'
+    # results_filepath = 'C://Users//denisesato//Experimentos_Tese//VDD//dataset1//output_console'
+    # results_filepath = 'D://Doutorado_Experimentos//VDD//experimento2//dataset1//output_console'
+    results_filepath = 'D://Doutorado_Experimentos//VDD//experimento2//dataset2//output_console'
+    # results_filepath = 'C://Users//denis//PycharmProjects//VDD//data//data_real'
     file_type = '.txt'
     key = 'out_'
     filenames = get_VDD_files(results_filepath, key, file_type)
