@@ -21,7 +21,7 @@ series_key = 'series'
 delta_key = 'delta'
 
 
-def plot_window_size_grouping_by_logsize(df, selected_column, title, order=None, delta=None):
+def plot_window_size_grouping_by_logsize(df, selected_column, title, order=None, delta=None, scale=None):
     ############################################################
     # Grouping by logsize
     ############################################################
@@ -55,6 +55,8 @@ def plot_window_size_grouping_by_logsize(df, selected_column, title, order=None,
         plt.title(f'{title}\nImpact of the window size on the {selected_column}')
     if 'f_score' in selected_column:
         plt.ylim(0.0, 1.0)
+    elif scale:
+        plt.ylim(scale[0], scale[1])
     plt.grid(True)
     if order:
         # get handles and labels
@@ -117,7 +119,7 @@ def plot_window_size_grouping_by_change_pattern(df, selected_column, title, wind
     plt.show()
 
 
-def analyze_metrics_ipdd(input_path, filename, dataset_config, selected_column, title):
+def analyze_metrics_ipdd(input_path, filename, dataset_config, selected_column, title, scale=None):
     complete_filename = os.path.join(input_path, filename)
     df = pd.read_excel(complete_filename, index_col=0)
     df.index.name = 'logname'
@@ -129,7 +131,7 @@ def analyze_metrics_ipdd(input_path, filename, dataset_config, selected_column, 
     if dataset_config.order_legend:
         order = dataset_config.order_legend
     for d in dataset_config.deltas:
-        plot_window_size_grouping_by_logsize(df, selected_column, title, order, d)
+        plot_window_size_grouping_by_logsize(df, selected_column, title, order, d, scale)
         plot_window_size_grouping_by_change_pattern(df, selected_column, title, delta=d)
         plot_window_size_grouping_by_change_pattern(df, selected_column, title, window=75, delta=d)
 
@@ -160,7 +162,7 @@ def analyze_metrics(dataset_config, input_path, filename, selected_column, title
     plot_window_size_grouping_by_change_pattern(df, selected_column, title)
 
 
-def analyze_dataset_trace(dataset_config, dataset_name):
+def analyze_dataset_trace(dataset_config, dataset_name, scale=None):
     f_score_column_ipdd = 'f_score'
     mean_delay_column_ipdd = 'mean_delay'
 
@@ -170,10 +172,10 @@ def analyze_dataset_trace(dataset_config, dataset_name):
     analyze_metrics_ipdd(ipdd_quality_trace_path, ipdd_quality_trace_filename, dataset_config, f_score_column_ipdd,
                          'IPDD Adaptive - Trace by Trace approach')
     analyze_metrics_ipdd(ipdd_quality_trace_path, ipdd_quality_trace_filename, dataset_config, mean_delay_column_ipdd,
-                         'IPDD Adaptive - Trace by Trace approach')
+                         'IPDD Adaptive - Trace by Trace approach', scale)
 
 
-def analyze_dataset_windowing(dataset_config, dataset_name):
+def analyze_dataset_windowing(dataset_config, dataset_name, scale=None):
     f_score_column_ipdd = 'f_score'
     mean_delay_column_ipdd = 'mean_delay'
 
@@ -185,7 +187,7 @@ def analyze_dataset_windowing(dataset_config, dataset_name):
                          'IPDD Adaptive - Windowing Approach')
     analyze_metrics_ipdd(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, dataset_config,
                          mean_delay_column_ipdd,
-                         'IPDD Adaptive - Windowing Approach')
+                         'IPDD Adaptive - Windowing Approach', scale)
 
 
 def analyze_dataset_model_simmilarity(dataset_config, dataset_name):
@@ -221,7 +223,7 @@ def analyze_dataset_vdd(dataset_config, dataset_name):
     analyze_metrics(dataset_config, vdd_path, vdd_filename, 'mean_delay all', 'CLUSTER')
 
 
-def generate_plot_tools(approaches, metric_name, plot_name=None):
+def generate_plot_tools(approaches, metric_name, plot_name=None, scale=None):
     # firstly enrich dict with dataframe from excel
     for key in approaches.keys():
         input_path = approaches[key][path_key]
@@ -258,6 +260,8 @@ def generate_plot_tools(approaches, metric_name, plot_name=None):
         plt.title(f'Impact of the window size on the {metric_name}')
     if 'f_score' in metric_name:
         plt.ylim(0.0, 1.0)
+    elif scale:
+        plt.ylim(scale[0], scale[1])
     plt.grid(True)
     plt.legend()
     plt.show()
@@ -322,7 +326,7 @@ def generate_plot_approach(approach, folder, filename, metric_name):
     plt.show()
 
 
-def compare_tools_dataset(dataset_name, metric_name):
+def compare_tools_dataset(dataset_name, metric_name, scale=None):
     approaches = {
         'IPDD Adaptive Trace by Trace':
             {
@@ -359,7 +363,7 @@ def compare_tools_dataset(dataset_name, metric_name):
                 filename_key: 'metrics_results_VDD.xlsx'
             },
     }
-    generate_plot_tools(approaches, metric_name)
+    generate_plot_tools(approaches, metric_name, scale=scale)
 
 
 def friedman_tools(output_folder, dataset_name, metric_name, windows):
@@ -521,8 +525,9 @@ if __name__ == '__main__':
     # F-score and mean delay for all configurations to select the best
     # configuration
     ######################################################################
+    # scale = [0.0, 70.0]
     # dataset_config = Dataset1Configuration()
-    # analyze_dataset_trace(dataset_config, "dataset1")
+    # analyze_dataset_trace(dataset_config, "dataset1", scale)
     # dataset_config = Dataset2Configuration()
     # analyze_dataset_trace(dataset_config, "dataset2")
 
@@ -584,10 +589,11 @@ if __name__ == '__main__':
     # F-score and mean delay for all configurations to select the best
     # configuration
     ######################################################################
+    # scale = [0.0, 110.0]
     # dataset_config = Dataset1Configuration()
-    # analyze_dataset_windowing(dataset_config, "dataset1")
+    # analyze_dataset_windowing(dataset_config, "dataset1", scale)
     # dataset_config = Dataset2Configuration()
-    # analyze_dataset_windowing(dataset_config, "dataset2")
+    # analyze_dataset_windowing(dataset_config, "dataset2", scale)
 
     ######################################################################
     # ANALYSIS 3 - Windowing approach
@@ -614,18 +620,19 @@ if __name__ == '__main__':
     ######################################################################
     # Comparing tools using the synthetic event logs
     ######################################################################
+    scale = [0.0, 360.0]
     # compare_tools_dataset("dataset1", 'f_score')
-    # compare_tools_dataset("dataset1", 'mean_delay')
+    # compare_tools_dataset("dataset1", 'mean_delay', scale=scale)
     compare_tools_dataset("dataset2", 'f_score')
     compare_tools_dataset("dataset2", 'mean_delay')
-    windows = [str(i) for i in range(50, 301, 25)]
-    output_folder = 'data/output/analysis'
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
+    # windows = [str(i) for i in range(50, 301, 25)]
+    # output_folder = 'data/output/analysis'
+    # if not os.path.exists(output_folder):
+    #     os.makedirs(output_folder)
     # friedman_tools(output_folder, "dataset1", "f_score", windows)
     # friedman_tools(output_folder, "dataset1", "mean_delay", windows)
-    friedman_tools(output_folder, "dataset2", "f_score", windows)
-    friedman_tools(output_folder, "dataset2", "mean_delay", windows)
+    # friedman_tools(output_folder, "dataset2", "f_score", windows)
+    # friedman_tools(output_folder, "dataset2", "mean_delay", windows)
 
     ######################################################################
     # Plot Apromore results
