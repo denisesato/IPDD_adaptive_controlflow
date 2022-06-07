@@ -112,10 +112,8 @@ def plot_window_size_grouping_by_change_pattern(df, selected_column, title, wind
         plt.title(f'{title}\n{selected_column} by change pattern - {window_str}')
     if 'f_score' in selected_column:
         plt.ylim(0.0, 1.0)
-    if 'mean_delay' in selected_column:
-        plt.ylim(0, 300)
     plt.tight_layout()
-    plt.grid(True)
+    plt.grid(False)
     plt.show()
 
 
@@ -132,8 +130,8 @@ def analyze_metrics_ipdd(input_path, filename, dataset_config, selected_column, 
         order = dataset_config.order_legend
     for d in dataset_config.deltas:
         plot_window_size_grouping_by_logsize(df, selected_column, title, order, d, scale)
-        plot_window_size_grouping_by_change_pattern(df, selected_column, title, delta=d)
-        plot_window_size_grouping_by_change_pattern(df, selected_column, title, window=75, delta=d)
+        # plot_window_size_grouping_by_change_pattern(df, selected_column, title, delta=d)
+        # plot_window_size_grouping_by_change_pattern(df, selected_column, title)
 
 
 def ipdd_plot_change_pattern(input_path, filename, selected_column, title, winsize, delta):
@@ -170,9 +168,9 @@ def analyze_dataset_trace(dataset_config, dataset_name, scale=None):
                               f'//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace//{dataset_name}'
     ipdd_quality_trace_filename = 'metrics_experiments_quality_metrics_trace_by_trace.xlsx'
     analyze_metrics_ipdd(ipdd_quality_trace_path, ipdd_quality_trace_filename, dataset_config, f_score_column_ipdd,
-                         'IPDD Adaptive - Trace by Trace approach')
+                         'Adaptive IPDD Trace by Trace')
     analyze_metrics_ipdd(ipdd_quality_trace_path, ipdd_quality_trace_filename, dataset_config, mean_delay_column_ipdd,
-                         'IPDD Adaptive - Trace by Trace approach', scale)
+                         'Adaptive IPDD Trace by Trace', scale)
 
 
 def analyze_dataset_windowing(dataset_config, dataset_name, scale=None):
@@ -184,10 +182,10 @@ def analyze_dataset_windowing(dataset_config, dataset_name, scale=None):
     ipdd_quality_windowing_filename = 'metrics_experiments_quality_metrics_fixed_window.xlsx'
     analyze_metrics_ipdd(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, dataset_config,
                          f_score_column_ipdd,
-                         'IPDD Adaptive - Windowing Approach')
+                         'Adaptive IPDD Windowing')
     analyze_metrics_ipdd(ipdd_quality_windowing_path, ipdd_quality_windowing_filename, dataset_config,
                          mean_delay_column_ipdd,
-                         'IPDD Adaptive - Windowing Approach', scale)
+                         'Adaptive IPDD Windowing', scale)
 
 
 def analyze_dataset_model_simmilarity(dataset_config, dataset_name):
@@ -299,6 +297,7 @@ def generate_ipdd_plot_deltas(approach, folder, filename, metric_name, deltas):
         plt.ylim(0.0, 1.0)
     plt.grid(True)
     plt.legend()
+    plt.show()
 
 
 def generate_plot_approach(approach, folder, filename, metric_name):
@@ -328,7 +327,7 @@ def generate_plot_approach(approach, folder, filename, metric_name):
 
 def compare_tools_dataset(dataset_name, metric_name, scale=None):
     approaches = {
-        'IPDD Adaptive Trace by Trace':
+        'Adaptive IPDD Trace by Trace':
             {
                 metric_key: metric_name,
                 path_key: f'data//output' \
@@ -336,7 +335,7 @@ def compare_tools_dataset(dataset_name, metric_name, scale=None):
                 filename_key: 'metrics_experiments_quality_metrics_trace_by_trace.xlsx',
                 delta_key: 0.002
             },
-        'IPDD Adaptive Windowing':
+        'Adaptive IPDD Windowing':
             {
                 metric_key: metric_name,
                 path_key: f'data//output' \
@@ -368,7 +367,7 @@ def compare_tools_dataset(dataset_name, metric_name, scale=None):
 
 def friedman_tools(output_folder, dataset_name, metric_name, windows):
     approaches = {
-        'IPDD Adaptive Trace by Trace':
+        'Adaptive IPDD Trace by Trace':
             {
                 metric_key: metric_name,
                 path_key: f'data//output' \
@@ -376,7 +375,7 @@ def friedman_tools(output_folder, dataset_name, metric_name, windows):
                 filename_key: 'metrics_experiments_quality_metrics_trace_by_trace.xlsx',
                 delta_key: 0.002
             },
-        'IPDD Adaptive Windowing':
+        'Adaptive IPDD Windowing':
             {
                 metric_key: metric_name,
                 path_key: f'data//output' \
@@ -430,8 +429,8 @@ def friedman_tools(output_folder, dataset_name, metric_name, windows):
 
     # compare samples
     stat, p = stats.friedmanchisquare(
-        approaches['IPDD Adaptive Trace by Trace'][series_key],
-        approaches['IPDD Adaptive Windowing'][series_key],
+        approaches['Adaptive IPDD Trace by Trace'][series_key],
+        approaches['Adaptive IPDD Windowing'][series_key],
         approaches['Apromore ProDrift AWIN'][series_key],
         approaches['Apromore ProDrift FWIN'][series_key],
         approaches['VDD'][series_key]
@@ -502,6 +501,7 @@ def check_emd_between_sample_logs():
 
 
 if __name__ == '__main__':
+    # I suggest to only uncomment one analysis per execution
     ######################################################################
     # EVALUATION OF THE IPDD ADAPTIVE ON SYNTHETIC EVENT LOGS
     ######################################################################
@@ -509,13 +509,13 @@ if __name__ == '__main__':
     # ANALYSIS 1 - Trace by trace approach
     # Impact of the delta and window size on the accuracy
     ######################################################################
-    # deltas = [0.002, 0.05, 0.1, 0.3]
-    # plot_name = 'IPDD Adaptive Trace by Trace Approach - Dataset 1'
+    deltas = [0.002, 0.05, 0.1, 0.3]
+    # plot_name = 'Adaptive IPDD Trace by Trace'
     # folder = 'data//output//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace//dataset1'
     # file = 'metrics_experiments_quality_metrics_trace_by_trace.xlsx'
     # generate_ipdd_plot_deltas(plot_name, folder, file, "f_score", deltas)
-    #
-    # plot_name = 'IPDD Adaptive Trace by Trace Approach - Dataset 2'
+
+    # plot_name = 'Adaptive IPDD Trace by Trace'
     # folder = 'data//output//controlflow_adaptive//detection_on_quality_metrics_trace_by_trace//dataset2'
     # file = 'metrics_experiments_quality_metrics_trace_by_trace.xlsx'
     # generate_ipdd_plot_deltas(plot_name, folder, file, "f_score", deltas)
@@ -525,11 +525,11 @@ if __name__ == '__main__':
     # F-score and mean delay for all configurations to select the best
     # configuration
     ######################################################################
-    # scale = [0.0, 70.0]
+    scale = [0.0, 70.0]
     # dataset_config = Dataset1Configuration()
     # analyze_dataset_trace(dataset_config, "dataset1", scale)
     # dataset_config = Dataset2Configuration()
-    # analyze_dataset_trace(dataset_config, "dataset2")
+    # analyze_dataset_trace(dataset_config, "dataset2", scale)
 
     ######################################################################
     # ANALYSIS 3 - Trace by Trace approach
@@ -542,7 +542,7 @@ if __name__ == '__main__':
     # ipdd_quality_trace_filename = 'metrics_experiments_quality_metrics_trace_by_trace.xlsx'
     # metric = 'f_score'
     # ipdd_plot_change_pattern(ipdd_quality_trace_path, ipdd_quality_trace_filename, metric,
-    #                          'IPDD Adaptive - Trace by trace approach',
+    #                          'Adaptive IPDD Trace by Trace',
     #                          75, 0.002)
     # dataset_name = "dataset2"
     # ipdd_quality_trace_path = f'data//output' \
@@ -550,9 +550,9 @@ if __name__ == '__main__':
     # ipdd_quality_trace_filename = 'metrics_experiments_quality_metrics_trace_by_trace.xlsx'
     # metric = 'f_score'
     # ipdd_plot_change_pattern(ipdd_quality_trace_path, ipdd_quality_trace_filename, metric,
-    #                          'IPDD Adaptive - Trace by trace approach',
+    #                          'Adaptive IPDD Trace by Trace',
     #                          75, 0.002)
-    #
+
     ######################################################################
     # ANALYSIS 4 - Trace by Trace aprpoach
     # Investigating pattern cd
@@ -573,13 +573,13 @@ if __name__ == '__main__':
     # ANALYSIS 1 - Windowing approach
     # Impact of the delta and window size on the accuracy
     ######################################################################
-    # deltas = [0.002, 0.05, 0.1, 0.3]
-    # plot_name = 'IPDD Adaptive Windowing Approach - Dataset 1'
+    deltas = [0.002, 0.05, 0.1, 0.3]
+    # plot_name = 'Adaptive IPDD Windowing'
     # folder = 'data//output//controlflow_adaptive//detection_on_quality_metrics_fixed_window//dataset1'
     # file = 'metrics_experiments_quality_metrics_fixed_window.xlsx'
     # generate_ipdd_plot_deltas(plot_name, folder, file, "f_score", deltas)
 
-    # plot_name = 'IPDD Adaptive Windowing Approach - Dataset 2'
+    # plot_name = 'Adaptive IPDD Windowing'
     # folder = 'data//output//controlflow_adaptive//detection_on_quality_metrics_fixed_window//dataset2'
     # file = 'metrics_experiments_quality_metrics_fixed_window.xlsx'
     # generate_ipdd_plot_deltas(plot_name, folder, file, "f_score", deltas)
@@ -589,7 +589,7 @@ if __name__ == '__main__':
     # F-score and mean delay for all configurations to select the best
     # configuration
     ######################################################################
-    # scale = [0.0, 110.0]
+    scale = [0.0, 110.0]
     # dataset_config = Dataset1Configuration()
     # analyze_dataset_windowing(dataset_config, "dataset1", scale)
     # dataset_config = Dataset2Configuration()
@@ -606,16 +606,14 @@ if __name__ == '__main__':
     # ipdd_quality_window_filename = 'metrics_experiments_quality_metrics_fixed_window.xlsx'
     # metric = 'f_score'
     # ipdd_plot_change_pattern(ipdd_quality_window_path, ipdd_quality_window_filename, metric,
-    #                          'IPDD Adaptive - Windowing approach',
-    #                          175, 0.002)
+    #                          'Adaptive IPDD Windowing', 175, 0.002)
     # dataset_name = "dataset2"
     # ipdd_quality_window_path = f'data//output' \
     #                           f'//controlflow_adaptive//detection_on_quality_metrics_fixed_window//{dataset_name}'
     # ipdd_quality_window_filename = 'metrics_experiments_quality_metrics_fixed_window.xlsx'
     # metric = 'f_score'
     # ipdd_plot_change_pattern(ipdd_quality_window_path, ipdd_quality_window_filename, metric,
-    #                          'IPDD Adaptive - Windowing approach',
-    #                          175, 0.002)
+    #                          'Adaptive IPDD Windowing', 175, 0.002)
 
     ######################################################################
     # Comparing tools using the synthetic event logs
@@ -623,14 +621,14 @@ if __name__ == '__main__':
     scale = [0.0, 360.0]
     # compare_tools_dataset("dataset1", 'f_score')
     # compare_tools_dataset("dataset1", 'mean_delay', scale=scale)
-    compare_tools_dataset("dataset2", 'f_score')
-    compare_tools_dataset("dataset2", 'mean_delay')
+    # compare_tools_dataset("dataset2", 'f_score')
+    # compare_tools_dataset("dataset2", 'mean_delay')
     # windows = [str(i) for i in range(50, 301, 25)]
     # output_folder = 'data/output/analysis'
     # if not os.path.exists(output_folder):
     #     os.makedirs(output_folder)
-    # friedman_tools(output_folder, "dataset1", "f_score", windows)
-    # friedman_tools(output_folder, "dataset1", "mean_delay", windows)
+    # # friedman_tools(output_folder, "dataset1", "f_score", windows)
+    # # friedman_tools(output_folder, "dataset1", "mean_delay", windows)
     # friedman_tools(output_folder, "dataset2", "f_score", windows)
     # friedman_tools(output_folder, "dataset2", "mean_delay", windows)
 
