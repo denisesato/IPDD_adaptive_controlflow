@@ -83,7 +83,7 @@ def compile_results_for_dataset(results_filepath):
 
 
 if __name__ == '__main__':
-    filepath = 'C://Users//denis//Documents//Doutorado_Experimentos//Apromore//dataset1//'
+    filepath = 'E:\Doutorado_Experimentos\Apromore\experimento2\dataset1'
     compile_results_for_dataset(filepath)
-    filepath = 'C://Users//denis//Documents//Doutorado_Experimentos//Apromore//dataset2//'
+    filepath = 'E:\Doutorado_Experimentos\Apromore\experimento2\dataset2'
     compile_results_for_dataset(filepath)
