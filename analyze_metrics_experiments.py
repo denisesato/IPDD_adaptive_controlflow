@@ -585,7 +585,7 @@ if __name__ == '__main__':
                              75, 0.002)
 
     ######################################################################
-    # ANALYSIS 4 - Trace by Trace aprpoach
+    # ANALYSIS 4 - Trace by Trace approach
     # Investigating pattern cd
     # Evaluating simplicity of the change patterns
     ######################################################################
@@ -649,7 +649,7 @@ if __name__ == '__main__':
     ######################################################################
     # Comparing tools using the synthetic event logs
     ######################################################################
-    output_folder = 'data/output/analysis'
+    output_folder = 'data/output/comparative_analysis'
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     scale = [0.0, 360.0]
