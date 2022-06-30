@@ -81,10 +81,7 @@ def compile_results_from_VDD(filepath, filenames, key):
 
 
 if __name__ == '__main__':
-    # results_filepath = 'C://Users//denisesato//Experimentos_Tese//VDD//dataset1//output_console'
-    # results_filepath = 'D://Doutorado_Experimentos//VDD//experimento2//dataset1//output_console'
-    results_filepath = 'D://Doutorado_Experimentos//VDD//experimento2//dataset2//output_console'
-    # results_filepath = 'C://Users//denis//PycharmProjects//VDD//data//data_real'
+    results_filepath = 'E://Doutorado_Experimentos//VDD//experimento2//dataset2//output_console'
     file_type = '.txt'
     key = 'out_'
     filenames = get_VDD_files(results_filepath, key, file_type)
