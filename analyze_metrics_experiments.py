@@ -13,6 +13,7 @@ from pm4py.objects.log.util import interval_lifecycle
 from execute_experiments import Dataset1Configuration, Dataset2Configuration
 from scipy import stats
 import scikit_posthocs as sp
+import Orange
 
 metric_key = 'metric'
 path_key = 'path'
@@ -531,6 +532,13 @@ def check_emd_between_sample_logs():
         print(f'{code}: {emd}')
 
 
+def cd_distance(folder, dataset, metric, names, avgranks):
+    cd = Orange.evaluation.compute_CD(avgranks, 10)
+    Orange.evaluation.graph_ranks(avgranks, names, cd=cd, width=6, textspace=1.5)
+    filename = os.path.join(folder, f'{dataset}_{metric}_CD.png')
+    plt.savefig(filename)
+
+
 if __name__ == '__main__':
     # I suggest to only uncomment one analysis per execution
     ######################################################################
@@ -663,10 +671,15 @@ if __name__ == '__main__':
     friedman_tools(output_folder, "dataset2", "f_score", windows)
     friedman_tools(output_folder, "dataset2", "mean_delay", windows)
 
+    # TEST
+    # names = ["IPDD Trace By Trace", "IPDD Windowing", "ProDrift AWIN", "ProDrift FWIN", "VDD"]
+    # avgranks = [2.82, 4.55, 2.91, 3.73, 1.00]  # values obtained from SPSS
+    # cd_distance(output_folder, "dataset2", "f_score", names, avgranks)
+
     ######################################################################
     # Plot Apromore results
     ######################################################################
-    # dataset_config = Dataset1Configuration()
-    # analyze_dataset_apromore(dataset_config, "dataset1")
-    # dataset_config = Dataset2Configuration()
-    # analyze_dataset_apromore(dataset_config, "dataset2")
+    dataset_config = Dataset1Configuration()
+    analyze_dataset_apromore(dataset_config, "dataset1")
+    dataset_config = Dataset2Configuration()
+    analyze_dataset_apromore(dataset_config, "dataset2")
