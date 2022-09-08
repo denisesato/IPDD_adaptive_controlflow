@@ -72,9 +72,9 @@ def plot_window_size_grouping_by_logsize(path, df, selected_column, title, datas
     if not os.path.exists(output_path):
         os.makedirs(output_path)
     if delta:
-        output_filename = f'window_impact_grouped_by_logsize_{title}_{dataset}_{selected_column}_delta{delta}.png'
+        output_filename = f'{title}_{dataset}_{selected_column}_delta{delta}.png'
     else:
-        output_filename = f'window_impact_grouped_by_logsize_{title}_{dataset}_{selected_column}.png'
+        output_filename = f'{title}_{dataset}_{selected_column}.png'
     plt.savefig(os.path.join(output_path, output_filename))
     plt.close()
 
