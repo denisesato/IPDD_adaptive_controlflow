@@ -387,8 +387,11 @@ def apply_detector_on_quality_metrics_fixed_window(folder, logname, output_folde
     tree = inductive_miner.apply_tree(log_for_model)
     print(f'Initial model discovered using traces [{initial_trace}-{winsize - 1}]')
     model_number = 1
+
+    output_folder = f'{output_folder}_d{delta}_sp{winsize}'
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
+
     gviz_pn = pn_visualizer.apply(net, im, fm)
     models_folder = f'models_win{winsize}_factor{factor}'
     if delta:
