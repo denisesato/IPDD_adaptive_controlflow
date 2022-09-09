@@ -165,9 +165,16 @@ def apply_detector_on_quality_metrics_trace_by_trace(folder, logname, metrics, d
     # net, im, fm = heuristics_miner.apply(log_for_model)
     # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMf)
     # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMd)
+    models_folder = f'models_win{stable_period}'
+    if delta_detection:
+        models_folder = f'{models_folder}_delta{delta_detection}'
+    models_output_path = os.path.join(output_folder, models_folder)
+    if not os.path.exists(models_output_path):
+        os.makedirs(models_output_path)
+
     gviz_pn = pn_visualizer.apply(net, im, fm)
     pn_visualizer.save(gviz_pn,
-                       os.path.join(output_folder, f'{logname}_PN_INITIAL_0_{stable_period - 1}.png'))
+                       os.path.join(models_output_path, f'{logname}_PN_INITIAL_0_{stable_period - 1}.png'))
 
     adwin_detection = {}
     drifts = {}
@@ -222,14 +229,14 @@ def apply_detector_on_quality_metrics_trace_by_trace(folder, logname, metrics, d
                 # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMd)
                 gviz_pn = pn_visualizer.apply(net, im, fm)
                 pn_visualizer.save(gviz_pn,
-                                   os.path.join(output_folder, f'{logname}_PN_{model_no}_{i}_{final_trace_id - 1}.png'))
+                                   os.path.join(models_output_path, f'{logname}_PN_{model_no}_{i}_{final_trace_id - 1}.png'))
                 model_no += 1
 
     all_drifts = []
     for dimension in metrics.keys():
         all_drifts += drifts[dimension]
         df = pd.DataFrame(values[dimension])
-        df.to_excel(os.path.join(output_folder, f'{dimension}.xlsx'))
+        df.to_excel(os.path.join(output_folder, f'{logname}_{dimension}_win{stable_period}.xlsx'))
     all_drifts = list(set(all_drifts))
     all_drifts.sort()
     save_plot(metrics, values, output_folder, f'{logname}_d{delta_detection}_sp{stable_period}', all_drifts)
