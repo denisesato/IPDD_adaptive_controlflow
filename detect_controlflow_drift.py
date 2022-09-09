@@ -147,7 +147,7 @@ def calculate_edges_similarity_metric(m, initial_edges, current_edges):
 # The process model is discovered using the inductive miner
 def apply_detector_on_quality_metrics_trace_by_trace(folder, logname, metrics, delta_detection, stable_period,
                                                      output_folder, update_model=True):
-    output_folder = f'{output_folder}_d{delta_detection}_sp{stable_period}'
+    output_folder = f'{output_folder}_win{stable_period}_d{delta_detection}'
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
@@ -165,16 +165,17 @@ def apply_detector_on_quality_metrics_trace_by_trace(folder, logname, metrics, d
     # net, im, fm = heuristics_miner.apply(log_for_model)
     # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMf)
     # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMd)
-    models_folder = f'models_win{stable_period}'
-    if delta_detection:
-        models_folder = f'{models_folder}_delta{delta_detection}'
-    models_output_path = os.path.join(output_folder, models_folder)
-    if not os.path.exists(models_output_path):
-        os.makedirs(models_output_path)
 
-    gviz_pn = pn_visualizer.apply(net, im, fm)
-    pn_visualizer.save(gviz_pn,
-                       os.path.join(models_output_path, f'{logname}_PN_INITIAL_0_{stable_period - 1}.png'))
+    # models_folder = f'models_win{stable_period}'
+    # if delta_detection:
+    #     models_folder = f'{models_folder}_delta{delta_detection}'
+    # models_output_path = os.path.join(output_folder, models_folder)
+    # if not os.path.exists(models_output_path):
+    #     os.makedirs(models_output_path)
+    #
+    # gviz_pn = pn_visualizer.apply(net, im, fm)
+    # pn_visualizer.save(gviz_pn,
+    #                    os.path.join(models_output_path, f'{logname}_PN_INITIAL_0_{stable_period - 1}.png'))
 
     adwin_detection = {}
     drifts = {}
@@ -227,19 +228,20 @@ def apply_detector_on_quality_metrics_trace_by_trace(folder, logname, metrics, d
                 # net, im, fm = heuristics_miner.apply(log_for_model)
                 # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMf)
                 # net, im, fm = inductive_miner.apply(log_for_model, variant=inductive_miner.Variants.IMd)
-                gviz_pn = pn_visualizer.apply(net, im, fm)
-                pn_visualizer.save(gviz_pn,
-                                   os.path.join(models_output_path, f'{logname}_PN_{model_no}_{i}_{final_trace_id - 1}.png'))
+
+                # gviz_pn = pn_visualizer.apply(net, im, fm)
+                # pn_visualizer.save(gviz_pn,
+                #                    os.path.join(models_output_path, f'{logname}_PN_{model_no}_{i}_{final_trace_id - 1}.png'))
                 model_no += 1
 
     all_drifts = []
     for dimension in metrics.keys():
         all_drifts += drifts[dimension]
         df = pd.DataFrame(values[dimension])
-        df.to_excel(os.path.join(output_folder, f'{logname}_{dimension}_win{stable_period}.xlsx'))
+        df.to_excel(os.path.join(output_folder, f'{logname}_{dimension}_win{stable_period}_d{delta_detection}.xlsx'))
     all_drifts = list(set(all_drifts))
     all_drifts.sort()
-    save_plot(metrics, values, output_folder, f'{logname}_d{delta_detection}_sp{stable_period}', all_drifts)
+    save_plot(metrics, values, output_folder, f'{logname}_win{stable_period}_d{delta_detection}', all_drifts)
     return all_drifts
 
 
@@ -395,19 +397,19 @@ def apply_detector_on_quality_metrics_fixed_window(folder, logname, output_folde
     print(f'Initial model discovered using traces [{initial_trace}-{winsize - 1}]')
     model_number = 1
 
-    output_folder = f'{output_folder}_d{delta}_sp{winsize}'
+    output_folder = f'{output_folder}_win{winsize}_d{delta}'
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    gviz_pn = pn_visualizer.apply(net, im, fm)
-    models_folder = f'models_win{winsize}_factor{factor}'
-    if delta:
-        models_folder = f'{models_folder}_delta{delta}'
-    models_output_path = os.path.join(output_folder, models_folder)
-    if not os.path.exists(models_output_path):
-        os.makedirs(models_output_path)
-    pn_visualizer.save(gviz_pn, os.path.join(models_output_path,
-                                             f'{logname}_PN_{model_number}_[{initial_trace}-{winsize - 1}].png'))
+    # gviz_pn = pn_visualizer.apply(net, im, fm)
+    # models_folder = f'models_win{winsize}_factor{factor}'
+    # if delta:
+    #     models_folder = f'{models_folder}_delta{delta}'
+    # models_output_path = os.path.join(output_folder, models_folder)
+    # if not os.path.exists(models_output_path):
+    #     os.makedirs(models_output_path)
+    # pn_visualizer.save(gviz_pn, os.path.join(models_output_path,
+    #                                          f'{logname}_PN_{model_number}_[{initial_trace}-{winsize - 1}].png'))
 
     metrics = {
         QualityDimension.FITNESS.name: 'fitnessTBR',
@@ -422,6 +424,7 @@ def apply_detector_on_quality_metrics_fixed_window(folder, logname, output_folde
         if delta:
             adwin[m] = ADWIN(delta=delta)
         else:
+            delta='_default'
             adwin[m] = ADWIN()
         drifts[m] = []
 
@@ -484,9 +487,10 @@ def apply_detector_on_quality_metrics_fixed_window(folder, logname, output_folde
             net, im, fm = inductive_miner.apply(log_for_model)
             tree = inductive_miner.apply_tree(log_for_model)
             print(f'New model discovered using traces [{change_point}-{change_point + winsize - 1}]')
-            gviz_pn = pn_visualizer.apply(net, im, fm)
-            pn_visualizer.save(gviz_pn, os.path.join(models_output_path,
-                                                     f'{logname}_PN_{model_number}_[{change_point}-{change_point + winsize - 1}].png'))
+
+            # gviz_pn = pn_visualizer.apply(net, im, fm)
+            # pn_visualizer.save(gviz_pn, os.path.join(models_output_path,
+            #                                          f'{logname}_PN_{model_number}_[{change_point}-{change_point + winsize - 1}].png'))
 
     print(f'Total of values for PRECISION: {len(values[QualityDimension.PRECISION.name])}')
     print(f'Total of values for FITNESS: {len(values[QualityDimension.FITNESS.name])}')
@@ -495,12 +499,12 @@ def apply_detector_on_quality_metrics_fixed_window(folder, logname, output_folde
     for m in metrics.keys():
         all_drifts += drifts[m]
         df = pd.DataFrame(values[m])
-        df.to_excel(os.path.join(output_folder, f'{logname}_{m}_win{winsize}.xlsx'))
+        df.to_excel(os.path.join(output_folder, f'{logname}_{m}_win{winsize}_d{delta}.xlsx'))
     all_drifts = list(set(all_drifts))
     all_drifts.sort()
     filename = f'{logname}_win{winsize}'
     if delta:
-        filename = f'{filename}_delta{delta}'
+        filename = f'{filename}_d{delta}'
     save_plot(metrics, values, output_folder, filename, all_drifts)
     return all_drifts
 
